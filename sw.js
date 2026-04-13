@@ -27,3 +27,20 @@ self.addEventListener('fetch', e => {
     caches.match(e.request).then(r => r || fetch(e.request))
   );
 });
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.open(CACHE).then((cache) => {
+      return cache.match(event.request).then((response) => {
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+          // Ha sikeres a hálózati kérés, elmentjük az újat a cache-be
+          if (networkResponse.ok) {
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        });
+        // Visszaadjuk a cache-t ha van, ha nincs, várjuk meg a hálózatot
+        return response || fetchPromise;
+      });
+    })
+  );
+});
