@@ -10,6 +10,19 @@ self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(c => c.addAll(FILES))
   );
+  self.skipWaiting(); // Ez már ott van nálad
+});
+
+self.addEventListener('activate', e => {
+  // --- EZT ADD HOZZÁ ---
+  self.clients.claim(); 
+  // ---------------------
+  e.waitUntil(
+    caches.keys().then(keys => {
+      // Itt jön a régi cache törlése...self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(FILES))
+  );
   self.skipWaiting();
 });
 
