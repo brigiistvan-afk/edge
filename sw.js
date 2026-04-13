@@ -1,4 +1,4 @@
-const CACHE = 'planner-v1';
+const CACHE = 'planner-v3';
 const FILES = [
   './edge.html',
   './manifest.json',
