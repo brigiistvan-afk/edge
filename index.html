@@ -787,6 +787,103 @@ header {
 .feedback-btn.skip   { border-color: #2a1010; }
 .feedback-btn.selected { background: rgba(212,175,55,0.1); border-color: var(--gold); }
 
+
+/* ── TÁVOLI KÉPERNYŐ ── */
+#tavoli-screen {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--black);
+    overflow-y: auto;
+}
+
+.tavoli-header {
+    padding: 24px 25px 16px;
+    border-bottom: 1px solid #141414;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tavoli-title {
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--gold);
+    font-size: 1.8rem;
+    font-weight: 300;
+    letter-spacing: 3px;
+}
+
+.tavoli-subtitle {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: #555;
+    text-transform: uppercase;
+    padding: 0 25px 16px;
+    margin-top: 10px;
+}
+
+.tavoli-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 25px 30px;
+}
+
+.tavoli-card {
+    background: #0d0d0d;
+    border: 1px solid #1e1e1e;
+    border-radius: 14px;
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.tavoli-card:active { border-color: var(--gold); background: rgba(212,175,55,0.05); }
+
+.tavoli-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.15), transparent);
+}
+
+.tavoli-card-icon  { font-size: 1.4rem; margin-bottom: 6px; display: block; }
+.tavoli-card-name  { font-family: 'Cormorant Garamond', serif; color: var(--gold); font-size: 1.2rem; margin-bottom: 4px; }
+.tavoli-card-desc  { font-size: 0.78rem; color: #666; line-height: 1.5; }
+
+/* Hangulat képernyő frissítés - 5 opció */
+.mood-grid-5 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.mood-grid-5 .mood-option:last-child {
+    grid-column: 1 / -1;
+}
+
+/* TÁVOLI gomb a calc képernyőn */
+.tavoli-entry-btn {
+    background: transparent;
+    border: 1px solid rgba(212,175,55,0.2);
+    color: var(--gold);
+    padding: 16px;
+    border-radius: 12px;
+    width: 100%;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: all 0.2s;
+}
+
+.tavoli-entry-btn:active { background: rgba(212,175,55,0.08); }
+
     </style>
 </head>
 <body>
@@ -845,13 +942,50 @@ header {
     </div>
 
 
+
+    <!-- ░░ TÁVOLI MÓD KÉPERNYŐ ░░ -->
+    <div id="tavoli-screen" class="hidden">
+        <div class="tavoli-header">
+            <span class="tavoli-title">📱 Távolból</span>
+            <button class="mode-btn dim" style="padding:8px 14px;font-size:0.6rem;width:auto;border-radius:20px" onclick="showMoodScreen()">Vissza</button>
+        </div>
+        <div class="tavoli-subtitle">Most nem vagytok együtt — ezek a feladatok nektek szólnak</div>
+        <div class="tavoli-grid">
+            <div class="tavoli-card" onclick="startTavoli('napkozbeni')">
+                <span class="tavoli-card-icon">☀️</span>
+                <div class="tavoli-card-name">Napközbeni izgalom</div>
+                <div class="tavoli-card-desc">Apró feladatok és üzenetek a nap folyamán. 30 másodperctől 2 percig.</div>
+            </div>
+            <div class="tavoli-card" onclick="startTavoli('fantazia')">
+                <span class="tavoli-card-icon">💭</span>
+                <div class="tavoli-card-name">Erotikus fantázia</div>
+                <div class="tavoli-card-desc">Szöveges és hangüzenet feladatok. Írd le amit gondolsz.</div>
+            </div>
+            <div class="tavoli-card" onclick="startTavoli('este')">
+                <span class="tavoli-card-icon">🌙</span>
+                <div class="tavoli-card-name">Esti rituálé</div>
+                <div class="tavoli-card-desc">Lefekvés előtti feladatok. Közel hoz akkor is ha messze vagy.</div>
+            </div>
+            <div class="tavoli-card" onclick="startTavoli('mely')">
+                <span class="tavoli-card-icon">🌊</span>
+                <div class="tavoli-card-name">Mély kommunikáció</div>
+                <div class="tavoli-card-desc">Kérdések és vallomások. Az érzelmi közelség fenntartása.</div>
+            </div>
+            <div class="tavoli-card" onclick="startTavoli('vegyes')">
+                <span class="tavoli-card-icon">🎲</span>
+                <div class="tavoli-card-name">Vegyes csomag</div>
+                <div class="tavoli-card-desc">Minden típusból. Az app választ.</div>
+            </div>
+        </div>
+    </div>
+
     <!-- ░░ HANGULAT KÉPERNYŐ ░░ -->
     <div id="mood-screen" class="hidden">
         <div>
             <div class="mood-title">Ma este...</div>
             <div class="mood-subtitle">Milyen hangulatban vagytok?</div>
         </div>
-        <div class="mood-grid">
+        <div class="mood-grid-5">
             <div class="mood-option" onclick="selectMood('jatekos')" id="mood-jatekos">
                 <span class="mood-emoji">😈</span>
                 <span class="mood-label">Játékos</span>
@@ -860,15 +994,22 @@ header {
                 <span class="mood-emoji">🌹</span>
                 <span class="mood-label">Intim</span>
             </div>
-            <div class="mood-option" onclick="selectMood('izgalmas')" id="mood-izgalmas">
-                <span class="mood-emoji">🔥</span>
-                <span class="mood-label">Izgalmas</span>
+            <div class="mood-option" onclick="selectMood('vad')" id="mood-vad">
+                <span class="mood-emoji">⚡</span>
+                <span class="mood-label">Vad</span>
+            </div>
+            <div class="mood-option" onclick="selectMood('mely')" id="mood-mely">
+                <span class="mood-emoji">🌊</span>
+                <span class="mood-label">Mély</span>
             </div>
             <div class="mood-option" onclick="selectMood('lassu')" id="mood-lassu">
                 <span class="mood-emoji">✨</span>
                 <span class="mood-label">Lassú</span>
             </div>
         </div>
+        <button class="tavoli-entry-btn" onclick="showTavoliScreen()">
+            📱 Most távol vagyunk egymástól
+        </button>
         <button class="mood-start-btn" id="mood-start-btn" onclick="startWithMood()">
             KEZDJÜK
         </button>
@@ -974,11 +1115,59 @@ header {
 
 // Hangulat → kategória/szint mapping
 const moodFilters = {
-    jatekos:  { cats: ['Roleplay','Public Edge','Psychology'], levels: [2,3] },
-    intim:    { cats: ['Romantikus','Szenzoros','Érzéki'],     levels: [1,2] },
-    izgalmas: { cats: ['Hardcore','BDSM-lite','Direkt'],       levels: [2,3] },
-    lassu:    { cats: ['Romantikus','Sensory','Szenzoros'],    levels: [1]   }
+    jatekos:  { cats: ['Játékos','Roleplay','Public Edge'],        levels: [1,2,3] },
+    intim:    { cats: ['Romantikus','Szenzoros','Érzéki','Mély'],  levels: [1,2]   },
+    vad:      { cats: ['Vad','Hardcore','BDSM-lite','Direkt'],     levels: [3]     },
+    mely:     { cats: ['Mély','Psychology','Romantikus'],          levels: [1,2]   },
+    lassu:    { cats: ['Romantikus','Sensory','Szenzoros','Mély'], levels: [1]     }
 };
+
+// Távoli mód definíciók
+const tavoliModes = {
+    napkozbeni: { cats: ['Napközbeni'],                        count: 5 },
+    fantazia:   { cats: ['Fantázia'],                          count: 5 },
+    este:       { cats: ['Távoli'],       levels: [1,2],       count: 5 },
+    mely:       { cats: ['Mély'],                              count: 5 },
+    vegyes:     { cats: ['Fantázia','Napközbeni','Távoli','Mély'], count: 6 }
+};
+
+function showTavoliScreen() {
+    hideAllScreens();
+    document.getElementById('tavoli-screen').classList.remove('hidden');
+}
+
+function showTavoliFromCalc() {
+    document.getElementById('ghost-app').classList.add('hidden');
+    document.getElementById('tavoli-screen').classList.remove('hidden');
+    loadFeedback();
+}
+
+function showMoodScreen() {
+    hideAllScreens();
+    document.getElementById('mood-screen').classList.remove('hidden');
+}
+
+function startTavoli(modeName) {
+    const mode = tavoliModes[modeName];
+    if (!mode) return;
+
+    // Sorozat logikával indítjuk
+    activeSeries  = 'tavoli_' + modeName;
+    seriesStep    = 0;
+    seriesQueue   = [];
+
+    const pool = tasksDatabase.filter(t =>
+        mode.cats.includes(t.cat) &&
+        (!mode.levels || mode.levels.includes(t.level))
+    );
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    for (let i = 0; i < mode.count && i < shuffled.length; i++) {
+        seriesQueue.push(shuffled[i].id);
+    }
+
+    showMainApp();
+    _showCurrentSeriesTask();
+}
 
 let selectedMood   = null;
 let feedbackData   = {};  // taskId -> 'fire'|'ok'|'skip'
@@ -989,6 +1178,7 @@ function selectMood(mood) {
     document.getElementById('mood-' + mood).classList.add('selected');
     selectedMood = mood;
     document.getElementById('mood-start-btn').classList.add('ready');
+    document.getElementById('mood-start-btn').style.opacity = '1';
 }
 
 function startWithMood() {
@@ -1253,7 +1443,7 @@ function renderSeriesProgress() { _renderSeriesProgress(); }
 // ═══════════════════════════════════════════════════════
 
 function hideAllScreens() {
-    ['ghost-app','main-app','pair-screen','mood-screen','series-screen'].forEach(id => {
+    ['ghost-app','main-app','pair-screen','mood-screen','series-screen','tavoli-screen'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
     });
@@ -1289,6 +1479,11 @@ function nextTask() {
     }
     // Eredeti logika
     stopTimer();
+    // Veto gomb visszaállítása
+    const vetoBtn = document.getElementById('veto-btn');
+    if (vetoBtn) { vetoBtn.style.display = 'block'; vetoBtn.onclick = vetoTask; }
+    const actionBtn = document.getElementById('action-btn');
+    if (actionBtn) { actionBtn.innerText = 'KÖVETKEZŐ'; actionBtn.onclick = nextTask; actionBtn.style.opacity = '1'; }
     const level   = parseInt(document.getElementById('mood-slider').value);
     let filtered  = tasksDatabase.filter(t => t.level === level);
     const unseenIds = filtered.map(t => t.id).filter(id => !seenIds.includes(id));
@@ -1331,6 +1526,11 @@ function updateMoodProgress() {
 const _origShowTask = showTask;
 function showTask(task) {
     _origShowTask(task);
+    // Veto gomb visszaállítása ha nem sorozat és nem befogadó
+    const veto = document.getElementById('veto-btn');
+    if (veto && !activeSeries && myRole !== 'befogado') {
+        veto.style.display = 'block';
+    }
     // Feedback sor megjelenítése
     setTimeout(() => {
         const row = document.getElementById('feedback-row');
@@ -1378,10 +1578,7 @@ function showPairScreen() {
     document.getElementById('pair-screen').classList.remove('hidden');
 }
 
-function showMainApp() {
-    document.getElementById('pair-screen').classList.add('hidden');
-    document.getElementById('main-app').classList.remove('hidden');
-}
+// showMainApp a navigáció blokkban van definiálva
 
 // ── CSATLAKOZÁS ──
 function getPairCode() {
@@ -1851,6 +2048,77 @@ const tasksDatabase = [
   { id: 198, cat: "Direkt",       title: "A Négyszög",                  desc: `Az egyikőtök kézzel kényezteti a másikat, de csak egy képzeletbeli négyszögön belül (pl. hasaljtól a csípőig). Kimenni tilos.`,  level: 2 },
   { id: 199, cat: "Romantikus",   title: "Elalvás Előtt",               desc: `Feküdjetek be egymás mellé. Az Irányító suttogva mesélje el a kedvenc közös emléküket, miközben finoman simogatja a párja karját.`,  level: 1 },
   { id: 200, cat: "Romantikus",   title: "Edge: A Vég Kezdete",         desc: `Az app le van zárva. A telefon le van téve. Nézzetek egymásra, és kezdjétek elölről – app nélkül.`,  level: 1 },
+
+  // ── FANTÁZIA feladatok (251-265) ──
+  { id: 251, cat: "Fantázia",    mood: "tavoli", title: "A Visszatérés",          desc: `Írj egy üzenetet amelyben pontosan leírod mi lesz az első 10 perc amikor végre újra együtt vagytok. Minden részletet.`, level: 2 },
+  { id: 252, cat: "Fantázia",    mood: "tavoli", title: "A Reggeli Álom",         desc: `Írj le egy részletes fantáziát arról mit csinálnátok ha most egymás mellett ébrednétek. Küld el mielőtt felkel a párod.`, level: 2 },
+  { id: 253, cat: "Fantázia",    mood: "tavoli", title: "A Tiltott Gondolat",     desc: `Írj le egy olyan fantáziát amit eddig még soha nem mertél elmondani. Nem kell nagynak lennie. Csak legyen igaz.`, level: 3 },
+  { id: 254, cat: "Fantázia",    mood: "tavoli", title: "A Részletes Terv",       desc: `Írj egy üzenetet: ha holnap ott lennél mellette mit csinálnál az első perctől az utolsóig. Minél részletesebb annál jobb.`, level: 3 },
+  { id: 255, cat: "Fantázia",    mood: "tavoli", title: "A Kedvenc Emlék",        desc: `Írj le egy közös intim emléket amit a legtöbbször idézel fel. Mit éreztél? Mi volt a legjobb pillanat?`, level: 2 },
+  { id: 256, cat: "Fantázia",    mood: "tavoli", title: "Az Idegen Helyen",       desc: `Írj egy rövid fantáziát: egy ismeretlen városban egy hotelszobában. Nincs semmi kötelezettség. Csak ti ketten.`, level: 3 },
+  { id: 257, cat: "Fantázia",    mood: "tavoli", title: "A Lassú Délelőtt",       desc: `Képzeld el: szabad délelőtt kettesben. Nincs sietség. Írj le mindent amit szeretnél hogy történjen. Sorban.`, level: 2 },
+  { id: 258, cat: "Fantázia",    mood: "tavoli", title: "A Zuhany Után",          desc: `Írj egy rövid szöveget: bejön a fürdőszobából. Mit látsz? Mit érzel? Mi történik ezután?`, level: 3 },
+  { id: 259, cat: "Fantázia",    mood: "tavoli", title: "A Várakozás Fantáziája", desc: `Éppen hazafelé tart. Írj neki egy üzenetet arról mit fogsz tenni amikor belép az ajtón. Legyen konkrét.`, level: 3 },
+  { id: 260, cat: "Fantázia",    mood: "tavoli", title: "A Tükör Előtt",          desc: `Írj egy rövid jelenet-leírást: állsz a tükör előtt. Belép a szobába. Mi történik? Te vezeted a jelenetet.`, level: 3 },
+  { id: 261, cat: "Fantázia",    mood: "tavoli", title: "A Csendes Este",         desc: `Írj le egy olyan csendes intim estét amit még nem éltetek át de szeretnétek. Minden apró részlettel.`, level: 1 },
+  { id: 262, cat: "Fantázia",    mood: "tavoli", title: "Három Mondat",           desc: `Pontosan 3 mondatban írj le valamit amit ma nagyon szeretnél. Nem kell magyarázat. Csak a három mondat.`, level: 2 },
+  { id: 263, cat: "Fantázia",    mood: "tavoli", title: "A Hangod",               desc: `Küldj hangüzenetet. Csak suttogva. Mondd el mit szeretnél ma estére. Nem kell hosszú — 20 másodperc elég.`, level: 3 },
+  { id: 264, cat: "Fantázia",    mood: "tavoli", title: "Az Érintés Emléke",      desc: `Hangüzenetben mesélj el egy olyan érintést amit soha nem felejtesz. Hol volt? Mikor? Mit éreztél?`, level: 2 },
+  { id: 265, cat: "Fantázia",    mood: "tavoli", title: "A Kép Mögött",           desc: `Küldj egy képet valamiről ami most körülötted van — de írj mellé egy mondatot hogy miért jutottál eszébe.`, level: 1 },
+  // ── NAPKÖZBENI feladatok (266-280) ──
+  { id: 266, cat: "Napközbeni",  mood: "tavoli", title: "A 10:00-ás Szünet",      desc: `Pontban 10-kor menj ki egy percre. Gondolj rá. Majd küldj egy üzenetet: most arra gondoltam hogy...`, level: 1 },
+  { id: 267, cat: "Napközbeni",  mood: "tavoli", title: "Ebédszünet Titok",       desc: `Ebéd közben küldj egy képet az ételedről. De írj mellé valamit amit ma még nem mertél elmondani.`, level: 2 },
+  { id: 268, cat: "Napközbeni",  mood: "tavoli", title: "A Féltizenkettő",        desc: `11:30-kor küldj egy egyetlen mondatos üzenetet. Semmi több. Pl: Ma reggel arra ébredtem hogy hiányzol.`, level: 1 },
+  { id: 269, cat: "Napközbeni",  mood: "tavoli", title: "Munkaidő Parancs",       desc: `Küldj egy apró feladatot amit a párod munka közben titokban elvégezhet. Pl: Simítsd végig a nyakad és gondolj rám.`, level: 2 },
+  { id: 270, cat: "Napközbeni",  mood: "tavoli", title: "A Három Szó",            desc: `Küldj pontosan 3 szót. Semmi más. A párod tudja mit jelent.`, level: 1 },
+  { id: 271, cat: "Napközbeni",  mood: "tavoli", title: "Délutáni Emlékeztető",   desc: `14:00 körül küldj egy üzenetet: Ma este... és fejezd be a mondatot. Legyen konkrét és izgalmas.`, level: 2 },
+  { id: 272, cat: "Napközbeni",  mood: "tavoli", title: "A Titkos Feladat",       desc: `Adj a párodnak egy titkos feladatot a napra: pl egész nap ne viseljen fehérneműt. Este számolj be róla.`, level: 3 },
+  { id: 273, cat: "Napközbeni",  mood: "tavoli", title: "Kép Parancs",            desc: `Küldj egy üzenetet: Küldj nekem egy képet a... és fejezd be. Valami ami nem nyilvánvaló de pikáns.`, level: 2 },
+  { id: 274, cat: "Napközbeni",  mood: "tavoli", title: "Az Igaz Mondat",         desc: `Küldj egy mondatot amely teljesen igaz és amit ritkán mondasz ki. Nem kell romantikusnak lennie. Csak igaznak.`, level: 1 },
+  { id: 275, cat: "Napközbeni",  mood: "tavoli", title: "Visszaszámlálás",        desc: `Reggel kezdj el visszaszámolni: X óra van hátra. Minden 2 órában küldj egy üzenetet a visszaszámlálóval.`, level: 2 },
+  { id: 276, cat: "Napközbeni",  mood: "tavoli", title: "A Nap Feladata",         desc: `Reggel adj egy egész napra szóló feladatot: valahányszor megiszik egy pohár vizet gondoljon rád és küldjön egy szívet.`, level: 1 },
+  { id: 277, cat: "Napközbeni",  mood: "tavoli", title: "Hangos Gondolat",        desc: `Küldj egy max 15 másodperces hangüzenetet. Csak mondd el hangosan amit most gondolsz. Semmi szerkesztés.`, level: 2 },
+  { id: 278, cat: "Napközbeni",  mood: "tavoli", title: "A Váratlan Kép",         desc: `Küldj egy képet ami rád jellemző és amire a párod mosolyog. Semmi szöveg mellé.`, level: 1 },
+  { id: 279, cat: "Napközbeni",  mood: "tavoli", title: "Este Előtt",             desc: `16:00 után küldj egy rövid üzenetet arról mi vár rá ma este. Legyen benne egy konkrét ígéret.`, level: 2 },
+  { id: 280, cat: "Napközbeni",  mood: "tavoli", title: "A Nap Legjobb Perce",    desc: `Este küldj egy üzenetet: A mai nap legjobb perce az volt amikor... és fejezd be. Legyen benne a párod.`, level: 1 },
+  // ── MÉLY feladatok (281-293) ──
+  { id: 281, cat: "Mély",        mood: "mely",   title: "A Félelem Kimondása",    desc: `Mondd el a párodnak mi az amit ebben a kapcsolatban néha félsz elveszíteni. Nem kell megoldás. Csak mondd el.`, level: 2 },
+  { id: 282, cat: "Mély",        mood: "mely",   title: "Az Első Pillanat",       desc: `Meséld el pontosan mit gondoltál az első alkalommal amikor fizikailag közel kerültetek egymáshoz.`, level: 1 },
+  { id: 283, cat: "Mély",        mood: "mely",   title: "A Láthatatlan Dolog",    desc: `Mondj el valamit ami fontos neked a kapcsolatban de amiről soha nem beszéltek. Valami amit feltételezed hogy ő is érez.`, level: 2 },
+  { id: 284, cat: "Mély",        mood: "mely",   title: "A Testről",              desc: `Mondd el a párodnak mi az a része a testének amit a legtöbbször észreveszel és miért. Legyen őszinte.`, level: 2 },
+  { id: 285, cat: "Mély",        mood: "mely",   title: "A Legjobb Döntés",       desc: `Mindketten mondjatok egy döntést amit a másik hozott és ami pozitívan érintette az életeteket.`, level: 1 },
+  { id: 286, cat: "Mély",        mood: "mely",   title: "Az Ismeretlen Rész",     desc: `Kérdezz rá valamire a párodról amit még nem tudsz. Nem felszínes kérdés — valami ami valóban érdekel.`, level: 1 },
+  { id: 287, cat: "Mély",        mood: "mely",   title: "A Változás",             desc: `Mondd el hogyan változtatta meg a párod a szemléletedet valamiről. Konkrét példával.`, level: 1 },
+  { id: 288, cat: "Mély",        mood: "mely",   title: "A Bizalom Pillanata",    desc: `Meséld el azt a pillanatot amikor először érezted hogy teljesen megbízol ebben a személyben.`, level: 2 },
+  { id: 289, cat: "Mély",        mood: "mely",   title: "Test és Érzelem",        desc: `Van-e összefüggés számodra az intimitás és az érzelmi közelség között? Mondd el hogyan működik ez nálad.`, level: 2 },
+  { id: 290, cat: "Mély",        mood: "mely",   title: "A Nem Kimondott Köszönet", desc: `Mondj köszönetet valamiért amit a párod csinál de amiért ritkán kapott elismerést. Legyen konkrét.`, level: 1 },
+  { id: 291, cat: "Mély",        mood: "mely",   title: "A Jövő Képe",            desc: `Mesélj el egy konkrét képet a jövőről amiben benne van a párod. Hol vagytok? Mit csináltok? Hogyan érzed magad?`, level: 1 },
+  { id: 292, cat: "Mély",        mood: "mely",   title: "Az Igény Kimondása",     desc: `Mondd el a párodnak pontosan mire van most szükséged tőle. Nem általánosságban — most, ebben az időszakban.`, level: 2 },
+  { id: 293, cat: "Mély",        mood: "mely",   title: "A Csend Jelentése",      desc: `Feküdjetek vagy üljetek egymás mellett csendben 5 percig. Utána mindenki mondja el mit gondolt.`, level: 1, time: 300 },
+  // ── VAD feladatok (294-305) ──
+  { id: 294, cat: "Vad",         mood: "vad",    title: "Az Állat",               desc: `Nincs lassúság nincs finomkodás. Az Irányító 3 percig azt csinál amit akar. A Befogadó befogad.`, level: 3 },
+  { id: 295, cat: "Vad",         mood: "vad",    title: "A Falhoz",               desc: `Felállsz. Odamész. Odaszorítod. Semmi más instrukció.`, level: 3 },
+  { id: 296, cat: "Vad",         mood: "vad",    title: "Ruha Marad",             desc: `Minden marad ami rajtatok van. Csak a minimális kerül le. Az akadályok fokozzák az izgalmat.`, level: 3 },
+  { id: 297, cat: "Vad",         mood: "vad",    title: "Az Első Ösztön",         desc: `Ne gondolkodj. Az első ösztönöd amit érzel a párod láttán — csináld meg. Most.`, level: 3 },
+  { id: 298, cat: "Vad",         mood: "vad",    title: "A Kontroll Elengedése",  desc: `5 percig az Irányító dönt mindent — pozíció, tempó, erő. A Befogadónak tilos bármit irányítani.`, level: 3, time: 300 },
+  { id: 299, cat: "Vad",         mood: "vad",    title: "Gyors és Intenzív",      desc: `Nincs előjáték. Nincs lassítás. 5 perc maximális intenzitás. Aztán csend.`, level: 3, time: 300 },
+  { id: 300, cat: "Vad",         mood: "vad",    title: "A Hang",                 desc: `Ma nem kell csendben maradni. Ellenkezőleg — minél hangosabb annál jobb. Senki ne fojtsa el magát.`, level: 3 },
+  { id: 301, cat: "Vad",         mood: "vad",    title: "A Meglepetés Támadás",   desc: `Az egyik fél bármikor és bárhol a lakásban meglepetésszerűen kezdeményez. A másik nem utasíthatja vissza.`, level: 3 },
+  { id: 302, cat: "Vad",         mood: "vad",    title: "Nem az Ágyon",           desc: `Az app kisorsolja a helyszínt. Szoba: ${['konyha','fürdőszoba','nappali','folyosó','erkély'][Math.floor(Math.random()*5)]}. Ott kell maradni.`, level: 3 },
+  { id: 303, cat: "Vad",         mood: "vad",    title: "Az Erő Játéka",          desc: `Az Irányító fizikailag domináns — tartja, fogja, irányítja. A Befogadó ellenáll amíg bírja majd megadja magát.`, level: 3 },
+  { id: 304, cat: "Vad",         mood: "vad",    title: "Csak a Test",            desc: `Nincs szó. Nincs hang. Csak a testetek kommunikál egymással. 10 percig néma intenzitás.`, level: 3, time: 600 },
+  { id: 305, cat: "Vad",         mood: "vad",    title: "A Visszaszámlálás",      desc: `Az Irányító hangosan számol 60-tól 1-ig. Ennyi az előjáték. A 0-nál kezdődik az igazi.`, level: 3, time: 60 },
+  // ── JÁTÉKOS feladatok (306-315) ──
+  { id: 306, cat: "Játékos",     mood: "jatekos", title: "A Fogadás",             desc: `Fogadjatok valamiben. A vesztes teljesít egy tetszőleges kérést. A tét ti döntsétek el.`, level: 2 },
+  { id: 307, cat: "Játékos",     mood: "jatekos", title: "Igazság vagy Merészség", desc: `Felváltva kérdeztek egymástól. Igazságra kell válaszolni vagy teljesíteni kell a merészséget.`, level: 2 },
+  { id: 308, cat: "Játékos",     mood: "jatekos", title: "A Szerep Csere",        desc: `15 percig a Befogadó az Irányító és fordítva. Mindenki a másik szerepét játssza.`, level: 2, time: 900 },
+  { id: 309, cat: "Játékos",     mood: "jatekos", title: "Dobókocka Dönt",        desc: `Dobjatok felváltva. Páros: az Irányító választ feladatot. Páratlan: a Befogadó. 6 dobás.`, level: 2 },
+  { id: 310, cat: "Játékos",     mood: "jatekos", title: "A Nevető Veszít",       desc: `Az Irányító mindent megpróbál hogy a másikat megnevettesse. Aki nevet először veszít és teljesít egy kérést.`, level: 2 },
+  { id: 311, cat: "Játékos",     mood: "jatekos", title: "Vakon Vezet",           desc: `Bekötött szemmel az Irányító elvezeti a Befogadót a lakás egyik végéből a másikba. Közben mindent megérinthet.`, level: 2 },
+  { id: 312, cat: "Játékos",     mood: "jatekos", title: "A Kitalálós",           desc: `Az Irányító gondol valamire amit csinálni szeretne. A Befogadó igen-nem kérdésekkel kitalálja. Ha sikerül ő kérheti.`, level: 1 },
+  { id: 313, cat: "Játékos",     mood: "jatekos", title: "Hang Nélküli Kérés",    desc: `Az egyik fél csak gesztusokkal és mimikával kommunikálja amit szeretne. A másik értelmezi.`, level: 1 },
+  { id: 314, cat: "Játékos",     mood: "jatekos", title: "Az Időzített Csók",     desc: `Az app 30 másodpercet indít. Ennyi ideig tart a csók. Aki elhúzódik előbb veszít.`, level: 1, time: 30 },
+  { id: 315, cat: "Játékos",     mood: "jatekos", title: "A Szín Játék",          desc: `Minden szín egy dolgot jelent: piros = csók, kék = érintés, sárga = suttogás. Öltözzetek fel és játsszátok.`, level: 2 },
   // ── ÚJ FELADATOK (201-250) ──
   { id: 201, cat: "Távoli",     title: "Élő Parancs",               desc: `Videóhívás közben az Irányító instrukciókat ad. A Befogadónak követnie kell őket miközben a kamera be van kapcsolva.`, level: 3 },
   { id: 202, cat: "Távoli",     title: "Szinkron Fürdő",             desc: `Pontosan 21:00-kor mindketten bemegyetek a fürdőbe. Telefon nincs. Utána leírjátok egymásnak mire gondoltatok.`, level: 2 },
@@ -2066,7 +2334,10 @@ function stopTimer() {
     </script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js');
+      navigator.serviceWorker.register('./sw.js').then(reg => {
+        // Azonnal frissít ha van új verzió
+        reg.update();
+      });
     }
   </script>
 </body>
