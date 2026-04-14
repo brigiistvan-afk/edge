@@ -2335,8 +2335,22 @@ function stopTimer() {
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').then(reg => {
-        // Azonnal frissít ha van új verzió
+        // Minden oldalbetöltéskor ellenőrzi van-e új verzió
         reg.update();
+        // Ha új SW vár, azonnal aktiválja
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          newSW.addEventListener('statechange', () => {
+            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+              // Új verzió elérhető - oldal újratöltése
+              window.location.reload();
+            }
+          });
+        });
+      });
+      // Ha a SW átvette az irányítást, töltse újra az oldalt
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
       });
     }
   </script>

@@ -1,40 +1,57 @@
-const CACHE = 'planner-v8';
-const FILES = [
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
-];
+const CACHE = 'planner-v9';
 
+// Telepítéskor csak az ikonokat és manifest-et mentjük
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(FILES))
+    caches.open(CACHE).then(c => c.addAll([
+      './icon-192.png',
+      './icon-512.png',
+      './manifest.json'
+    ]))
   );
+  // Azonnal átveszi az irányítást, nem vár a régi SW leállására
   self.skipWaiting();
 });
 
+// Aktiváláskor töröl MINDEN régi cache-t
 self.addEventListener('activate', e => {
-  // Töröljük az ÖSSZES régi cache-t
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => {
-        console.log('Cache törölve:', k);
+      Promise.all(keys.map(k => {
+        console.log('[SW] Cache törölve:', k);
         return caches.delete(k);
       }))
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
+// Fetch: index.html mindig hálózatról, minden más cache-ből vagy hálózatról
 self.addEventListener('fetch', e => {
-  // Network-first: mindig a hálózatról tölt, cache csak fallback
+  const url = new URL(e.request.url);
+  
+  // index.html: mindig hálózat, cache csak ha offline
+  if (url.pathname.endsWith('index.html') || url.pathname.endsWith('/')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, copy));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+  
+  // Minden más: cache first
   e.respondWith(
-    fetch(e.request)
-      .then(res => {
+    caches.match(e.request).then(cached => {
+      if (cached) return cached;
+      return fetch(e.request).then(res => {
         const copy = res.clone();
         caches.open(CACHE).then(c => c.put(e.request, copy));
         return res;
-      })
-      .catch(() => caches.match(e.request))
+      });
+    })
   );
 });
