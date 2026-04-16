@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Planner</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Planner">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Jost:wght@300;400&display=swap');
+
+:root {
+    --gold: #d4af37;
+    --gold-dim: rgba(212,175,55,0.15);
+    --black: #0a0a0a;
+    --gray2: #1e1e1e;
+    --text: #ddd8cc;
+    --text-dim: #666;
+    --red: #8b0000;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { margin:0; background:var(--black); color:var(--text); font-family:'Jost',sans-serif; font-weight:300; overflow:hidden; height:100vh; user-select:none; }
+.hidden { display:none !important; }
+
+/* ── SZÁMOLÓGÉP ── */
+#ghost-app { padding:30px 25px; height:100vh; display:flex; flex-direction:column; justify-content:center; }
+.calc-display { font-family:'Cormorant Garamond',serif; font-size:4rem; font-weight:300; text-align:right; padding:25px 30px; background:#000; color:#fff; margin-bottom:16px; border-radius:12px; letter-spacing:4px; border:1px solid #1a1a1a; min-height:100px; display:flex; align-items:center; justify-content:flex-end; }
+.calc-buttons { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.calc-buttons button { padding:28px; font-size:1.9rem; font-family:'Cormorant Garamond',serif; background:var(--gray2); border:1px solid #222; color:#ccc; border-radius:12px; cursor:pointer; transition:background 0.15s; }
+.calc-buttons button:active { background:#2a2a2a; color:#fff; }
+.calc-buttons button.special { color:var(--gold); border-color:#2a2200; }
+
+/* ── LICENC ── */
+#license-screen { height:100vh; display:flex; flex-direction:column; justify-content:center; padding:30px 25px; gap:20px; background:var(--black); }
+.lic-title { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:2.2rem; font-weight:300; letter-spacing:3px; text-align:center; }
+.lic-sub { font-size:0.75rem; letter-spacing:2px; color:#555; text-transform:uppercase; text-align:center; }
+#license-input { background:#0f0f0f; border:1px solid rgba(212,175,55,0.3); color:var(--gold); font-family:'Cormorant Garamond',serif; font-size:2.2rem; letter-spacing:6px; text-align:center; padding:18px; border-radius:12px; width:100%; outline:none; text-transform:uppercase; }
+#license-input.error { border-color:#8b0000; color:#c04040; }
+.lic-btn { background:linear-gradient(135deg,#c9a227,#d4af37); border:none; color:#000; padding:17px; border-radius:12px; width:100%; font-family:'Jost',sans-serif; font-size:0.85rem; letter-spacing:4px; text-transform:uppercase; cursor:pointer; }
+.lic-note { text-align:center; font-size:0.65rem; color:#333; letter-spacing:2px; }
+
+/* ── HANGULAT KÉPERNYŐ ── */
+#mood-screen { height:100vh; display:flex; flex-direction:column; justify-content:center; padding:28px 25px; gap:14px; background:var(--black); }
+.mood-title { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:2rem; font-weight:300; letter-spacing:3px; text-align:center; }
+.mood-sub { font-size:0.7rem; letter-spacing:2px; color:#555; text-transform:uppercase; text-align:center; }
+.mood-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.mood-opt { background:#0f0f0f; border:1px solid #252520; border-radius:14px; padding:18px 12px; text-align:center; cursor:pointer; transition:all 0.2s; }
+.mood-opt:active, .mood-opt.selected { border-color:var(--gold); background:rgba(212,175,55,0.08); }
+.mood-opt .emoji { font-size:2rem; display:block; margin-bottom:6px; }
+.mood-opt .mlabel { font-size:0.8rem; letter-spacing:2px; color:#aaa; text-transform:uppercase; display:block; }
+.mood-opt.selected .mlabel { color:var(--gold); }
+.mood-opt:last-child { grid-column: 1 / -1; }
+.mood-start { background:linear-gradient(135deg,#c9a227,#d4af37); border:none; color:#000; padding:17px; border-radius:12px; width:100%; font-family:'Jost',sans-serif; font-size:0.85rem; letter-spacing:4px; text-transform:uppercase; cursor:pointer; margin-top:4px; }
+.mood-skip { background:transparent; border:1px solid #222; color:#555; padding:13px; border-radius:12px; width:100%; font-family:'Jost',sans-serif; font-size:0.7rem; letter-spacing:3px; text-transform:uppercase; cursor:pointer; }
+.tavoli-big-btn { background:transparent; border:1px solid rgba(212,175,55,0.25); color:var(--gold); padding:16px; border-radius:12px; width:100%; font-family:'Jost',sans-serif; font-size:0.8rem; letter-spacing:3px; text-transform:uppercase; cursor:pointer; }
+
+/* ── TÁVOLI KÉPERNYŐ ── */
+#tavoli-screen { height:100vh; display:flex; flex-direction:column; background:var(--black); overflow-y:auto; }
+.tav-header { padding:22px 25px 14px; border-bottom:1px solid #141414; display:flex; justify-content:space-between; align-items:center; }
+.tav-title { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1.8rem; font-weight:300; letter-spacing:3px; }
+.tav-list { padding:16px 25px 30px; display:flex; flex-direction:column; gap:12px; }
+.tav-card { background:#0d0d0d; border:1px solid #1e1e1e; border-radius:14px; padding:18px 20px; cursor:pointer; transition:all 0.2s; }
+.tav-card:active { border-color:var(--gold); background:rgba(212,175,55,0.05); }
+.tav-card-icon { font-size:1.4rem; margin-bottom:6px; display:block; }
+.tav-card-name { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1.2rem; margin-bottom:4px; }
+.tav-card-desc { font-size:0.78rem; color:#666; line-height:1.5; }
+
+/* ── HANGULAT SOROZAT KÉPERNYŐ ── */
+#series-screen { height:100vh; display:flex; flex-direction:column; background:var(--black); overflow-y:auto; }
+.ser-header { padding:22px 25px 14px; border-bottom:1px solid #141414; display:flex; justify-content:space-between; align-items:center; }
+.ser-title { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1.6rem; font-weight:300; letter-spacing:2px; }
+.ser-list { padding:16px 25px 30px; display:flex; flex-direction:column; gap:12px; }
+.ser-card { background:#0f0f0f; border:1px solid #222; border-radius:14px; padding:20px; cursor:pointer; transition:all 0.2s; }
+.ser-card:active { border-color:var(--gold); background:rgba(212,175,55,0.05); }
+.ser-card-name { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1.3rem; margin-bottom:6px; }
+.ser-card-desc { font-size:0.8rem; color:#777; line-height:1.6; margin-bottom:8px; }
+.ser-card-meta { font-size:0.65rem; letter-spacing:2px; color:#444; text-transform:uppercase; }
+
+/* ── FŐ APP ── */
+#main-app { height:100vh; display:flex; flex-direction:column; background:var(--black); position:relative; overflow:hidden; }
+#main-app::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(212,175,55,0.04) 0%,transparent 70%); pointer-events:none; z-index:0; }
+
+header { display:flex; justify-content:space-between; align-items:center; padding:18px 20px 14px; position:relative; z-index:1; border-bottom:1px solid #141414; }
+#status { display:flex; align-items:center; gap:8px; color:var(--text-dim); font-size:0.7rem; letter-spacing:3px; text-transform:uppercase; }
+.status-dot { width:6px; height:6px; border-radius:50%; background:var(--gold); animation:pulse 2.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;}50%{opacity:0.3;} }
+.safe-word { background:rgba(139,0,0,0.1); border:1px solid #5a2020; color:#c04040; padding:7px 14px; border-radius:20px; font-family:'Jost',sans-serif; font-size:0.65rem; letter-spacing:3px; cursor:pointer; }
+
+/* AKTÍV HANGULAT BAR */
+#active-mood-bar { display:none; align-items:center; justify-content:space-between; padding:8px 14px; margin:8px 20px 0; background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.18); border-radius:10px; position:relative; z-index:1; }
+.active-mood-label { font-size:0.85rem; letter-spacing:2px; color:var(--gold); }
+.change-mood-btn { background:none; border:none; color:#555; font-size:0.65rem; letter-spacing:2px; text-transform:uppercase; cursor:pointer; font-family:'Jost',sans-serif; padding:4px 8px; }
+.change-mood-btn:active { color:var(--gold); }
+
+#card-area { flex:1; display:flex; flex-direction:column; justify-content:center; padding:16px 20px; position:relative; z-index:1; }
+.category-badge { font-size:0.75rem; letter-spacing:4px; color:var(--gold); text-transform:uppercase; margin-bottom:14px; opacity:0.7; text-align:center; }
+#task-card { border:1px solid rgba(212,175,55,0.22); padding:28px 22px; border-radius:16px; text-align:center; background:linear-gradient(145deg,#0f0f0f,#070707); position:relative; overflow:hidden; transition:opacity 0.3s,transform 0.3s; }
+#task-card::before { content:''; position:absolute; top:0;left:0;right:0;height:1px; background:linear-gradient(90deg,transparent,rgba(212,175,55,0.4),transparent); }
+#task-card.transitioning { opacity:0; transform:translateY(10px); }
+#task-title { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1.7rem; font-weight:400; letter-spacing:2px; margin:0 0 14px; line-height:1.3; }
+#task-desc { font-size:0.9rem; line-height:1.8; color:#ccc8c0; margin:0; }
+.time-badge { display:inline-block; margin-top:14px; padding:6px 14px; border:1px solid #252520; border-radius:20px; font-size:0.75rem; letter-spacing:2px; color:#888; cursor:pointer; }
+.time-badge:active { border-color:var(--gold); color:var(--gold); }
+.feedback-row { display:none; gap:10px; justify-content:center; margin-top:14px; }
+.feedback-btn { flex:1; padding:11px 8px; border-radius:10px; border:1px solid #222; background:transparent; font-size:1.1rem; cursor:pointer; transition:all 0.15s; }
+.feedback-btn.selected { background:rgba(212,175,55,0.1); border-color:var(--gold); }
+
+/* SOROZAT PROGRESS */
+#series-progress { display:none; gap:6px; justify-content:center; padding:10px 0 0; position:relative; z-index:1; }
+.series-dot { width:8px; height:8px; border-radius:50%; background:#222; transition:background 0.3s; }
+.series-dot.done { background:var(--gold); }
+.series-dot.active { background:var(--gold); box-shadow:0 0 8px rgba(212,175,55,0.5); }
+
+.controls { padding:12px 20px 26px; position:relative; z-index:1; border-top:1px solid #111; }
+.slider-label-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.slider-label { font-size:0.72rem; letter-spacing:2px; color:#888; text-transform:uppercase; }
+#level-text { color:var(--gold); font-weight:400; }
+#mood-slider { width:100%; height:4px; -webkit-appearance:none; appearance:none; background:linear-gradient(90deg,var(--gold) 0%,rgba(212,175,55,0.4) 50%,#2a2a2a 100%); border-radius:2px; outline:none; margin-bottom:16px; display:block; }
+#mood-slider::-webkit-slider-thumb { -webkit-appearance:none; width:24px; height:24px; border-radius:50%; background:var(--black); border:2px solid var(--gold); cursor:pointer; box-shadow:0 0 10px rgba(212,175,55,0.3); }
+#action-btn { background:linear-gradient(135deg,#c9a227,#d4af37,#c9a227); border:none; color:#000; padding:17px; border-radius:12px; width:100%; font-family:'Jost',sans-serif; font-weight:400; font-size:0.9rem; letter-spacing:4px; margin-bottom:10px; cursor:pointer; transition:all 0.15s; text-transform:uppercase; }
+#action-btn:active { transform:scale(0.97); filter:brightness(0.88); }
+#veto-btn { background:transparent; border:1px solid #282828; color:#777; padding:13px; border-radius:12px; width:100%; font-family:'Jost',sans-serif; font-size:0.75rem; letter-spacing:3px; cursor:pointer; text-transform:uppercase; }
+#veto-btn:active { background:#181818; color:#aaa; }
+
+/* ── PÁROS MÓD ── */
+#pair-screen { height:100vh; display:flex; flex-direction:column; justify-content:center; padding:30px 25px; gap:16px; background:var(--black); }
+.pair-title { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1.8rem; font-weight:300; letter-spacing:3px; text-align:center; }
+.pair-sub { font-size:0.7rem; letter-spacing:2px; color:#555; text-transform:uppercase; text-align:center; }
+.pair-input { background:#0f0f0f; border:1px solid rgba(212,175,55,0.3); color:var(--gold); font-family:'Cormorant Garamond',serif; font-size:2.5rem; letter-spacing:8px; text-align:center; padding:18px; border-radius:12px; width:100%; outline:none; }
+.pair-input::placeholder { color:#333; }
+.mode-btn { padding:16px; border-radius:12px; font-family:'Jost',sans-serif; font-size:0.75rem; letter-spacing:3px; text-transform:uppercase; cursor:pointer; transition:all 0.15s; width:100%; }
+.mode-btn.gold { background:linear-gradient(135deg,#c9a227,#d4af37); border:none; color:#000; font-weight:400; }
+.mode-btn.outline { background:transparent; border:1px solid rgba(212,175,55,0.3); color:var(--gold); }
+.mode-btn.dim { background:transparent; border:1px solid #222; color:#555; }
+.mode-btn:active { transform:scale(0.97); filter:brightness(0.88); }
+
+/* ── TIMER ── */
+#timer-overlay { position:fixed; inset:0; background:rgba(5,5,5,0.96); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(6px); }
+.timer-ring { position:relative; margin-bottom:20px; }
+.timer-ring svg { transform:rotate(-90deg); }
+.timer-ring-bg { stroke:#1a1a1a; stroke-width:1; fill:none; }
+.timer-ring-circle { stroke:var(--gold); stroke-width:1.5; fill:none; stroke-dasharray:565; stroke-dashoffset:0; transition:stroke-dashoffset 1s linear; stroke-linecap:round; }
+.timer-center { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+.timer-display { font-family:'Cormorant Garamond',serif; font-size:3.5rem; font-weight:300; color:var(--gold); letter-spacing:3px; line-height:1; }
+.timer-label { font-size:0.55rem; letter-spacing:5px; color:var(--text-dim); text-transform:uppercase; margin-top:8px; }
+#timer-stop-btn { margin-top:30px; background:none; border:1px solid #282828; color:#555; padding:12px 32px; border-radius:25px; font-family:'Jost',sans-serif; font-size:0.65rem; letter-spacing:4px; cursor:pointer; text-transform:uppercase; }
+
+@keyframes fadeInUp { from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);} }
+.intro-anim   { animation:fadeInUp 0.5s ease forwards; }
+.intro-anim-2 { animation:fadeInUp 0.5s 0.12s ease both; }
+.intro-anim-3 { animation:fadeInUp 0.5s 0.24s ease both; }
+    </style>
+</head>
+<body>
+
+<!-- ░░ SZÁMOLÓGÉP ░░ -->
+<div id="ghost-app">
+    <div class="calc-display" id="calc-display">0</div>
+    <div class="calc-buttons">
+        <button onclick="calc(7)">7</button><button onclick="calc(8)">8</button><button onclick="calc(9)">9</button>
+        <button onclick="calc(4)">4</button><button onclick="calc(5)">5</button><button onclick="calc(6)">6</button>
+        <button onclick="calc(1)">1</button><button onclick="calc(2)">2</button><button onclick="calc(3)">3</button>
+        <button class="special" onclick="unlock()">*</button>
+        <button onclick="calc(0)">0</button>
+        <button class="special" onclick="resetCalc()">C</button>
+    </div>
+</div>
+
+<!-- ░░ LICENC ░░ -->
+<div id="license-screen" class="hidden">
+    <div class="lic-title">Aktiválás</div>
+    <div class="lic-sub">Add meg az aktivációs kódot</div>
+    <input id="license-input" type="text" maxlength="9" placeholder="XXXX-0000"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter')activateLicense()">
+    <button class="lic-btn" onclick="activateLicense()">AKTIVÁLÁS</button>
+    <div class="lic-note">Kód szükséges a használathoz</div>
+    <button onclick="forceRefresh()" style="background:none;border:none;color:#333;font-size:0.6rem;letter-spacing:2px;font-family:'Jost',sans-serif;cursor:pointer;margin-top:8px;text-transform:uppercase;padding:8px">
+        ↻ Frissítés / Cache törlés
+    </button>
+</div>
+
+<!-- ░░ HANGULAT ░░ -->
+<div id="mood-screen" class="hidden">
+    <div class="mood-title">Ma este...</div>
+    <div class="mood-sub">Milyen hangulatban vagytok?</div>
+    <div class="mood-grid">
+        <div class="mood-opt" onclick="selectMood('jatekos')" id="mood-jatekos"><span class="emoji">😈</span><span class="mlabel">Játékos</span></div>
+        <div class="mood-opt" onclick="selectMood('intim')"   id="mood-intim">  <span class="emoji">🌹</span><span class="mlabel">Intim</span></div>
+        <div class="mood-opt" onclick="selectMood('vad')"     id="mood-vad">    <span class="emoji">⚡</span><span class="mlabel">Vad</span></div>
+        <div class="mood-opt" onclick="selectMood('mely')"    id="mood-mely">   <span class="emoji">🌊</span><span class="mlabel">Mély</span></div>
+        <div class="mood-opt" onclick="selectMood('lassu')"   id="mood-lassu">  <span class="emoji">✨</span><span class="mlabel">Lassú</span></div>
+    </div>
+    <button class="tavoli-big-btn" onclick="showTavoliScreen()">📱 Most távol vagyunk egymástól</button>
+    <button class="mood-start" id="mood-start-btn" onclick="startWithMood()">KEZDJÜK</button>
+    <button class="mood-skip" onclick="skipMood()">Kihagyom</button>
+</div>
+
+<!-- ░░ TÁVOLI ░░ -->
+<div id="tavoli-screen" class="hidden">
+    <div class="tav-header">
+        <span class="tav-title">📱 Távolból</span>
+        <button class="mode-btn dim" style="padding:8px 14px;font-size:0.6rem;width:auto;border-radius:20px" onclick="showMoodScreen()">← Vissza</button>
+    </div>
+    <div class="tav-list">
+        <div class="tav-card" onclick="startTavoli('napkozbeni')"><span class="tav-card-icon">☀️</span><div class="tav-card-name">Napközbeni izgalom</div><div class="tav-card-desc">Apró feladatok és üzenetek a nap folyamán.</div></div>
+        <div class="tav-card" onclick="startTavoli('fantazia')">  <span class="tav-card-icon">💭</span><div class="tav-card-name">Erotikus fantázia</div><div class="tav-card-desc">Szöveges és hangüzenet feladatok. Írd le amit gondolsz.</div></div>
+        <div class="tav-card" onclick="startTavoli('este')">      <span class="tav-card-icon">🌙</span><div class="tav-card-name">Esti rituálé</div><div class="tav-card-desc">Lefekvés előtti feladatok. Közel hoz ha messze vagy.</div></div>
+        <div class="tav-card" onclick="startTavoli('mely')">      <span class="tav-card-icon">🌊</span><div class="tav-card-name">Mély kommunikáció</div><div class="tav-card-desc">Kérdések és vallomások. Érzelmi közelség távolból.</div></div>
+        <div class="tav-card" onclick="startTavoli('vegyes')">    <span class="tav-card-icon">🎲</span><div class="tav-card-name">Vegyes csomag</div><div class="tav-card-desc">Minden típusból. Az app választ.</div></div>
+    </div>
+</div>
+
+<!-- ░░ HANGULAT SOROZAT ░░ -->
+<div id="series-screen" class="hidden">
+    <div class="ser-header">
+        <span class="ser-title">Hangulat sorozat</span>
+        <button class="mode-btn dim" style="padding:8px 14px;font-size:0.6rem;width:auto;border-radius:20px" onclick="showMainApp()">← Vissza</button>
+    </div>
+    <div class="ser-list">
+        <div class="ser-card" onclick="startSeries('lassu')">      <div class="ser-card-name">✨ Lassú Este</div><div class="ser-card-desc">Romantikus és érzéki feladatok, semmi sietség.</div><div class="ser-card-meta">5 feladat · Lágy</div></div>
+        <div class="ser-card" onclick="startSeries('feszultseg')"> <div class="ser-card-name">⚡ Feszültség Este</div><div class="ser-card-desc">Várakozás, pszichológiai játék, kontroll.</div><div class="ser-card-meta">5 feladat · Közepes</div></div>
+        <div class="ser-card" onclick="startSeries('teljes')">     <div class="ser-card-name">🔥 Teljes Este</div><div class="ser-card-desc">Fokozódó intenzitás elejétől a végéig.</div><div class="ser-card-meta">6 feladat · Vegyes</div></div>
+        <div class="ser-card" onclick="startSeries('meglepetes')"> <div class="ser-card-name">🎲 Meglepetés Este</div><div class="ser-card-desc">Az app dönt mindent. Ti csak csináljátok.</div><div class="ser-card-meta">5 feladat · Véletlen</div></div>
+    </div>
+</div>
+
+<!-- ░░ FŐ APP ░░ -->
+<div id="main-app" class="hidden">
+    <header>
+        <div id="status"><div class="status-dot"></div><span id="status-text">CONNECTED</span></div>
+        <div style="display:flex;gap:6px;align-items:center">
+            <button class="mode-btn dim" style="padding:6px 12px;font-size:0.55rem;width:auto;border-radius:20px" onclick="showSeriesScreen()">HANGULAT</button>
+            <button class="mode-btn dim" style="padding:6px 12px;font-size:0.55rem;width:auto;border-radius:20px" onclick="showPairScreen()">PÁROS</button>
+            <button class="safe-word" onclick="safeWord()" oncontextmenu="forceRefresh();return false;" title="Tartsd 3mp-ig a cache törléséhez">■ STOP</button>
+        </div>
+    </header>
+
+    <!-- AKTÍV HANGULAT BAR -->
+    <div id="active-mood-bar">
+        <span class="active-mood-label" id="active-mood-label"></span>
+        <button class="change-mood-btn" onclick="changeMood()">Változtatás</button>
+    </div>
+
+    <div id="card-area">
+        <div class="category-badge intro-anim" id="category-label">— EDGE —</div>
+        <div id="task-card" class="intro-anim-2">
+            <h2 id="task-title">Készen állsz?</h2>
+            <p id="task-desc">Válassz hangulatot, majd nyomj a gombra.</p>
+            <div class="time-badge hidden" id="time-badge"></div>
+            <div class="feedback-row" id="feedback-row">
+                <button class="feedback-btn" onclick="giveFeedback('fire')">🔥</button>
+                <button class="feedback-btn" onclick="giveFeedback('ok')">👍</button>
+                <button class="feedback-btn" onclick="giveFeedback('skip')">❌</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="series-progress"></div>
+
+    <div class="controls intro-anim-3">
+        <div class="slider-label-row">
+            <span class="slider-label">LÁGY</span>
+            <span class="slider-label" id="level-text">KÖZEPES</span>
+            <span class="slider-label">INTENZÍV</span>
+        </div>
+        <input type="range" min="1" max="3" value="2" id="mood-slider" oninput="updateSliderLabel()">
+        <button id="action-btn" onclick="nextTask()">KEZDJÜK</button>
+        <button id="veto-btn" onclick="vetoTask()">ÚJAT KÉREK</button>
+    </div>
+</div>
+
+<!-- ░░ PÁROS MÓD ░░ -->
+<div id="pair-screen" class="hidden">
+    <div class="pair-title">Kapcsolódás</div>
+    <div class="pair-sub">Add meg a közös kódot</div>
+    <input class="pair-input" id="pair-code-input" type="number" maxlength="4" placeholder="0000" oninput="this.value=this.value.slice(0,4)">
+    <button class="mode-btn gold" onclick="joinAsIranyito()">Irányítóként csatlakozom</button>
+    <button class="mode-btn outline" onclick="joinAsBefogado()">Befogadóként csatlakozom</button>
+    <button class="mode-btn dim" onclick="showMainApp()">Egyedül folytatom</button>
+</div>
+
+<!-- ░░ TIMER ░░ -->
+<div id="timer-overlay" class="hidden">
+    <div class="timer-ring">
+        <svg viewBox="0 0 200 200" width="200" height="200">
+            <circle class="timer-ring-bg" cx="100" cy="100" r="90"/>
+            <circle class="timer-ring-circle" cx="100" cy="100" r="90" id="ring-progress"/>
+        </svg>
+        <div class="timer-center">
+            <div class="timer-display" id="timer-display">0:00</div>
+            <div class="timer-label">VISSZASZÁMLÁLÁS</div>
+        </div>
+    </div>
+    <button id="timer-stop-btn" onclick="stopTimer()">LEÁLLÍT</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  LICENC RENDSZER
+// ═══════════════════════════════════════════════════════
+const VALID_LICENSES = {
+    '7777-EDGE': { expires: null },
+    'ROSE-4821': { expires: null },
+    'BLUE-7392': { expires: null },
+    'GOLD-2847': { expires: null },
+    'FIRE-5510': { expires: null },
+    'LUNA-9034': { expires: null },
+    'KISS-1122': { expires: null },
+};
+
+function checkStoredLicense() {
+    try {
+        const s = localStorage.getItem('edge_license');
+        if (!s) return false;
+        const { code } = JSON.parse(s);
+        if (!VALID_LICENSES[code]) return false;
+        const lic = VALID_LICENSES[code];
+        if (lic.expires && new Date(lic.expires) < new Date()) return false;
+        return true;
+    } catch(e) { return false; }
+}
+
+function activateLicense() {
+    const inp = document.getElementById('license-input');
+    const code = inp.value.trim().toUpperCase();
+    if (VALID_LICENSES[code]) {
+        const lic = VALID_LICENSES[code];
+        if (!lic.expires || new Date(lic.expires) >= new Date()) {
+            localStorage.setItem('edge_license', JSON.stringify({ code, activatedAt: new Date().toISOString() }));
+            hideAllScreens();
+            document.getElementById('mood-screen').classList.remove('hidden');
+            loadFeedback();
+            if (navigator.vibrate) navigator.vibrate([100,50,200]);
+            return;
+        }
+    }
+    inp.classList.add('error');
+    inp.value = '';
+    setTimeout(() => inp.classList.remove('error'), 1000);
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  CACHE TÖRLÉS + FRISSÍTÉS
+// ═══════════════════════════════════════════════════════
+async function forceRefresh() {
+    try {
+        // Összes cache törlése
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+        // SW törlése
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+    } catch(e) {}
+    // Hard reload
+    window.location.href = window.location.href + '?v=' + Date.now();
+}
+
+// ═══════════════════════════════════════════════════════
+//  FELADATOK ADATBÁZISA
+// ═══════════════════════════════════════════════════════
+const tasksDatabase = [
+  { id: 1,   cat: "Hardcore",     title: "10 cm-es tilalom",            desc: `A Domináns kijelöl egy pontot a párján. 15 percig bárhol érintheti, kivéve ott. A cél a feszültség.`,  level: 3 },
+  { id: 2,   cat: "Romantikus",   title: "Szívritmus",                  desc: `Üljetek szemben, kéz a szívre. 5 percig csak egymás légzését figyeljétek csendben.`,  level: 1, time: 300 },
+  { id: 3,   cat: "BDSM-lite",    title: "Selyem fogság",               desc: `Kösse meg az Irányító a párja kezét egy selyemsállal. 10 percig csak nézheti őt.`,  level: 2, time: 600 },
+  { id: 4,   cat: "Roleplay",     title: "Az Idegen",                   desc: `Úgy kell tennetek a konyhában, mintha most találkoznátok először egy bárban.`,  level: 2 },
+  { id: 5,   cat: "Hardcore",     title: "Jég és Tűz",                  desc: `Egy jégkockát és meleg teát váltogatva érintsd meg a párod legérzékenyebb pontjait.`,  level: 3 },
+  { id: 6,   cat: "Psychology",   title: "Engedélykérés",               desc: `A következő 30 percben a Befogadó minden mozdulathoz (ülés, ivás, érintés) engedélyt kell kérjen.`,  level: 2, time: 1800 },
+  { id: 7,   cat: "Romantikus",   title: "Vak bizalom",                 desc: `Bekötött szemmel kell kitalálnod, hol csókol meg éppen a párod.`,  level: 1 },
+  { id: 8,   cat: "Hardcore",     title: "Edging 7",                    desc: `7 perc kényeztetés, de a csúcs előtt meg kell állni. Háromszor ismételjétek meg.`,  level: 3, time: 420 },
+  { id: 9,   cat: "Public Edge",  title: "Titkos érintés",              desc: `Társaságban/vacsora alatt az Irányító választhat egy szót. Amikor elhangzik, a másiknak meg kell érintenie magát az asztal alatt.`,  level: 3 },
+  { id: 10,  cat: "BDSM-lite",    title: "A Szolga",                    desc: `Az Irányító kényelembe helyezi magát, a párja pedig 15 percig csak az ő utasításait követheti.`,  level: 2, time: 900 },
+  { id: 11,  cat: "Psychology",   title: "A Tiltott Gyümölcs",          desc: `Válasszatok egy pontot a testen. 15 percig a párod bárhol kényeztethet, de azt az egy pontot nem érintheti meg. Csak a vágyat építjük.`,  level: 2, time: 900 },
+  { id: 12,  cat: "Romantikus",   title: "Illatemlék",                  desc: `Hunyjátok be a szemeteket. Az egyik fél használja a kedvenc parfümjét vagy illóolaját, és lassan vezesse körbe a másik orra előtt, miközben finoman hozzásimul.`,  level: 1 },
+  { id: 13,  cat: "Roleplay",     title: "Titkos Randi",                desc: `Találkozzatok a lakás egy olyan pontján, ahol ritkán vagytok kettesben (pl. erkély, folyosó). Úgy viselkedjetek, mintha tiltott viszonyotok lenne.`,  level: 2 },
+  { id: 14,  cat: "Sensory",      title: "Hőmérséklet-játék",           desc: `Az 'Irányító" jeges, majd meleg ujjaival végigsimítja a másik gerincvonalát. Figyeljétek a borzongást.`,  level: 2 },
+  { id: 15,  cat: "Hardcore",     title: "100 Érintés",                 desc: `Az 'Irányító" 100 lassú, apró érintést adhat a párjának. A 'Befogadó" csak számolhat, de ha elvéti a számot, az érintés újraindul.`,  level: 3 },
+  { id: 16,  cat: "Romantikus",   title: "Szemlencse",                  desc: `Nézzetek egymás szemébe 3 percig. Tilos beszélni. Hagyd, hogy a csendben megszülessen a feszültség.`,  level: 1, time: 180 },
+  { id: 17,  cat: "BDSM-lite",    title: "Gyengéd Korlát",              desc: `Használjatok egy nyakkendőt vagy selyemsálat, hogy az egyik fél kezeit lazán rögzítsétek. A cél a kiszolgáltatottság érzése, nem a szorítás.`,  level: 2 },
+  { id: 18,  cat: "Public Edge",  title: "A Suttogó",                   desc: `Menjetek el egy zsúfolt helyre. Súgd a párod fülébe a legpikánsabb tervedet az estére, amit csak ő hallhat.`,  level: 3 },
+  { id: 19,  cat: "Roleplay",     title: "A Megrendelő",                desc: `Játsszátok azt, hogy az egyikőtök masszőr, a másik pedig egy igényes vendég, aki pontosan tudja, mit akar.`,  level: 2 },
+  { id: 20,  cat: "Sensory",      title: "Selyemút",                    desc: `Bekötött szemmel feküdj le. A párod egy selyemdarabbal térképezze fel az arcodat és a nyakadat, anélkül, hogy megszólalna.`,  level: 2 },
+  { id: 21,  cat: "Hardcore",     title: "Stop-Tábla",                  desc: `Az 'Irányító" elkezdi kényeztetni a párját. A másiknak bármikor joga van 'Stoppot" mondani 30 másodpercre, majd a játék folytatódik. A kontroll megosztott.`,  level: 3 },
+  { id: 22,  cat: "Romantikus",   title: "Tükör-masszázs",              desc: `Üljetek egymás mögé. A hátsó fél masszírozza az elülsőt, miközben az elülső fél instrukciókat ad, mi esik a legjobban.`,  level: 1 },
+  { id: 23,  cat: "Psychology",   title: "Várakozás",                   desc: `Az app 10 perces visszaszámlálót indít. Ez alatt az idő alatt csak flörtölni szabad, fizikai érintés nélkül.`,  level: 2, time: 600 },
+  { id: 24,  cat: "Hardcore",     title: "Parancs-Válasz",              desc: `Az 'Irányító" kér 3 apró, pikáns dolgot (pl. 'húzd le a válladon a ruhád"), amit a másiknak azonnal teljesítenie kell.`,  level: 3 },
+  { id: 25,  cat: "Sensory",      title: "Tollpihe",                    desc: `Keressetek egy tollat vagy egy nagyon puha ecsetet. Az egész testen végig kell vezetni, elkerülve a közvetlen kontaktust a bőrrel.`,  level: 1 },
+  { id: 26,  cat: "Roleplay",     title: "Az Asszisztens",              desc: `Az egyik fél segít a másiknak öltözködni vagy vetkőzni, de csak akkor mozdulhat, ha engedélyt kap rá.`,  level: 2 },
+  { id: 27,  cat: "Romantikus",   title: "Éjszakai Fürdő",              desc: `Ha van rá mód, vegyetek egy közös fürdőt gyertyafénynél, ahol a cél a lassú, vizes simogatás.`,  level: 1 },
+  { id: 28,  cat: "BDSM-lite",    title: "Térdelő Kérés",               desc: `Kérd meg a párodat, hogy térdeljen eléd, és csak a szemével kérje azt, amire vágyik.`,  level: 2 },
+  { id: 29,  cat: "Hardcore",     title: "Vakmerő Kaland",              desc: `Az app kiválaszt egy véletlenszerű szobát a lakásban. Ott kell végrehajtanotok egy gyors, 5 perces akciót.`,  level: 3, time: 300 },
+  { id: 30,  cat: "Psychology",   title: "Vallomás",                    desc: `Mondd el a párodnak azt az egy dolgot, amit mindig is ki akartál próbálni vele, de eddig nem merted kérni.`,  level: 2 },
+  { id: 31,  cat: "Sensory",      title: "Jég és Parázs",               desc: `Az Irányító egy jégkockát tart a szájában, majd egy korty meleg teát iszik, és váltogatva csókolja végig a Befogadó nyakát és vállait.`,  level: 3 },
+  { id: 32,  cat: "Romantikus",   title: "Érintés-térkép",              desc: `A Befogadó vezesse az Irányító kezét a testén, megmutatva azt a három pontot, ahol ma este a leginkább vágyik az érintésre.`,  level: 1 },
+  { id: 33,  cat: "Psychology",   title: "A Tiltott Zóna",              desc: `Jelöljetek ki egy ruhadarabot, amit tilos levenni a következő 20 percben, bármi is történik. A korlát fokozza a vágyat.`,  level: 2, time: 1200 },
+  { id: 34,  cat: "Roleplay",     title: "Az Interjú",                  desc: `Üljetek az asztal két oldalára. Az Irányító 'interjúvolja" a másikat a legtitkosabb fantáziáiról, mintha most jelentkezne egy bizalmas pozícióra.`,  level: 2 },
+  { id: 35,  cat: "BDSM-lite",    title: "Puha Kötelék",                desc: `Használjatok egy puha övet vagy köntös-kötőt a Befogadó kezeinek lazán való rögzítéséhez a háta mögött. Az Irányító 5 percig csak suttoghat hozzá.`,  level: 2, time: 300 },
+  { id: 36,  cat: "Sensory",      title: "A Konyha Íze",                desc: `Vigyetek be egy édes és egy sós ízt a játékba (pl. méz, tejszínhab, só). Az Irányító helyezze el ezeket a Befogadó testén, majd csukott szemmel keresse meg őket.`,  level: 2 },
+  { id: 37,  cat: "Romantikus",   title: "Tükörkép",                    desc: `Álljatok a tükör elé egymás mögé. Az Irányító csak a tükrön keresztül nézheti a párját, miközben lassan simogatja a derekát.`,  level: 1 },
+  { id: 38,  cat: "Hardcore",     title: "60 Másodperces Roham",        desc: `Az Irányító 60 másodpercig bármit kérhet, amit a Befogadónak azonnal, gondolkodás nélkül teljesítenie kell.`,  level: 3, time: 60 },
+  { id: 39,  cat: "Psychology",   title: "A Várakozás Művészete",       desc: `Az app egy véletlenszerű időzítőt indít (2–5 perc). Addig tilos bármilyen fizikai kontaktus, csak a tekintetetek találkozhat.`,  level: 1 },
+  { id: 40,  cat: "Roleplay",     title: "A Szobalány/Inas",            desc: `Az egyik fél 15 percig minden apró kérést teljesít (pl. italhozatal, lábmasszázs), de csak a legudvariasabb formában.`,  level: 2, time: 900 },
+  { id: 41,  cat: "Sensory",      title: "Vibráló Csend",               desc: `Ha van otthon segédeszköz, az Irányító helyezze el a Befogadón, de a fokozatot csak ő irányíthatja az app ritmusára.`,  level: 3 },
+  { id: 42,  cat: "Romantikus",   title: "Lassított Felvétel",          desc: `Minden mozdulatot ötször lassabban kell végeznetek a következő 10 percben. A lassúság elmélyíti az érzékelést.`,  level: 1, time: 600 },
+  { id: 43,  cat: "Public Edge",  title: "A Távoli Kontroll",           desc: `Egy nyilvános üzenetküldőn keresztül küldj egy képet a párodnak arról, mi vár rá, ha hazaértek.`,  level: 2 },
+  { id: 44,  cat: "BDSM-lite",    title: "Szemfedő",                    desc: `Egy sötét sállal takarjátok le a Befogadó szemét. Az Irányító mozgassa a Befogadó kezét saját magán, irányítva az érintéseket.`,  level: 2 },
+  { id: 45,  cat: "Hardcore",     title: "Próbatétel",                  desc: `Az Irányító határozzon meg egy pózt, amit a Befogadónak 3 percig mozdulatlanul kell tartania, miközben az Irányító elhalmozza bókokkal.`,  level: 3, time: 180 },
+  { id: 46,  cat: "Sensory",      title: "Hajszárító Szellő",           desc: `Használjatok hajszárítót (csak langyos levegővel!), hogy távolról cirógassátok a másik bőrét. Meglepően intenzív élmény.`,  level: 1 },
+  { id: 47,  cat: "Roleplay",     title: "A Megmentő",                  desc: `Játsszátok azt, hogy az egyikőtök eltévedt a sötétben, a másik pedig 'befogadja" és 'gondoskodik" róla a saját szabályai szerint.`,  level: 2 },
+  { id: 48,  cat: "Romantikus",   title: "Üzenet a Bőrön",              desc: `Az Irányító az ujjával írjon le egy szót a Befogadó hátára. Ki kell találnia, mi az. Ha sikerül, ő kérhet egy kényeztetést.`,  level: 1 },
+  { id: 49,  cat: "Psychology",   title: "Titkos Megállapodás",         desc: `Súgjátok meg egymásnak, mi az az egy dolog, amit ma este biztosan nem fogtok megtenni, és mi az, amit mindenképpen.`,  level: 1 },
+  { id: 50,  cat: "Hardcore",     title: "Az Utolsó Gomb",              desc: `Az Irányító választhat egy ruhadarabot a páron, amit ő maga távolíthat el, de csak a fogaival.`,  level: 3 },
+  { id: 51,  cat: "Sensory",      title: "Konyhai Kísértés",            desc: `Keressetek egy sima fakanalat vagy egy hideg fémmerőkanalat. Az Irányító használja ezeket a Befogadó bőrén, váltogatva az anyagok textúráját.`,  level: 2 },
+  { id: 52,  cat: "Romantikus",   title: "Lassú Tánc",                  desc: `Kapcsoljátok be egy dalt, ami mindkettőtöknek jelent valamit. Táncoljatok rá szorosan átölelve egymást, de tilos csókolózni a dal végéig.`,  level: 1 },
+  { id: 53,  cat: "Psychology",   title: "A Megfigyelő",                desc: `Az Irányító kényelembe helyezi magát egy fotelben. A Befogadónak 5 percig úgy kell mozognia a szobában, hogy folyamatosan fenntartja a csábító szemkontaktust.`,  level: 2, time: 300 },
+  { id: 54,  cat: "Roleplay",     title: "A Tiltott Tanár",             desc: `Az Irányító 'elmagyaráz" valamit a Befogadónak, miközben a Befogadónak tilos elkalandoznia, bármilyen érintést is kap közben.`,  level: 2 },
+  { id: 55,  cat: "BDSM-lite",    title: "Kényelmes Kötelék",           desc: `A Befogadó kezeit lazán rögzítsétek a háta mögött egy puha pólóval. Az Irányító 5 percig csak a nyakát és a füleit kényeztetheti.`,  level: 2, time: 300 },
+  { id: 56,  cat: "Hardcore",     title: "10 Pillanat",                 desc: `Az Irányító 10 pontot választhat a Befogadó testén. Mindegyiknél meg kell állnia 30 másodpercre, és csak az ujjhegyeivel vibrálhat felette, érintés nélkül.`,  level: 3 },
+  { id: 57,  cat: "Sensory",      title: "Gyertyafény-viasz",           desc: `(Csak óvatosan!) Használjatok masszázsgyertyát (alacsony olvadáspontú viaszt). Az Irányító csöpögtessen pár cseppet a Befogadó hátára, majd azonnal masszírozza el.`,  level: 3 },
+  { id: 58,  cat: "Romantikus",   title: "Vallomás a Sötétben",         desc: `Kapcsoljátok le minden lámpát. Suttogjátok el egymásnak azt az egy dolgot, amit a legjobban szeretek a másik testében.`,  level: 1 },
+  { id: 59,  cat: "Psychology",   title: "A Visszaszámlálás",           desc: `Az Irányító elkezd vetkőztetni. Minden ruhadarab között el kell telnie 2 percnek, amit intenzív flörtöléssel kell kitölteni.`,  level: 2 },
+  { id: 60,  cat: "Roleplay",     title: "A Szobalány/Inas II",         desc: `Az Irányító 'megkéri" a Befogadót, hogy szolgáljon fel neki egy italt, de közben a Befogadónak egy pikáns ruhadarabot is viselnie kell.`,  level: 2 },
+  { id: 61,  cat: "Hardcore",     title: "Kontrollált Lélegzet",        desc: `Az Irányító a tenyerét a Befogadó szája elé teszi. A Befogadónak az Irányító tenyerébe kell lélegeznie, miközben az Irányító parancsokat suttog.`,  level: 3 },
+  { id: 62,  cat: "Sensory",      title: "Gyümölcsös Érintés",          desc: `Használjatok egy gerezd hideg gyümölcsöt (pl. szőlő, eper). Vezessétek végig a másik testén, majd a végén osszátok meg egy csókkal.`,  level: 1 },
+  { id: 63,  cat: "Romantikus",   title: "Masszázs-rituálé",            desc: `10 perc teljes testmasszázs olajjal, de szigorúan tilos az intim zónák érintése. A cél az egész test ellazítása.`,  level: 1, time: 600 },
+  { id: 64,  cat: "BDSM-lite",    title: "A Szemfedő Titka",            desc: `Bekötött szemmel a Befogadónak ki kell találnia, az Irányító melyik testrészével ér hozzá éppen (kéz, ajkak, orr, kar).`,  level: 2 },
+  { id: 65,  cat: "Psychology",   title: "Az Alkukötés",                desc: `Mondjatok 3 dolgot, amit a ma este folyamán a Befogadó kérhet az Irányítótól, cserébe egy 'különleges szolgálatért".`,  level: 1 },
+  { id: 66,  cat: "Roleplay",     title: "Az Ügyfél és a Szakértő",     desc: `Az egyikőtök egy szakértő (pl. borkóstoló vagy lakberendező), aki 'véleményezi" a másik adottságait és stílusát.`,  level: 2 },
+  { id: 67,  cat: "Hardcore",     title: "Stop-and-Go",                 desc: `5 perc intenzív játék, amit az Irányító bármikor leállíthat egyetlen szóra. A Befogadónak szoborként kell megmerevednie a folytatásig.`,  level: 3, time: 300 },
+  { id: 68,  cat: "Sensory",      title: "A Haj Ereje",                 desc: `Az Irányító lassan a Befogadó hajába túr, és finom, de határozott mozdulatokkal hátrahúzza a fejét, feltárva a nyakát a csókok előtt.`,  level: 2 },
+  { id: 69,  cat: "Romantikus",   title: "Közös Fürdő-terv",            desc: `Tervezzétek meg szóban a tökéletes közös éjszakát, minden apró részletet érintve, miközben egymás kezét fogjátok.`,  level: 1 },
+  { id: 70,  cat: "Public Edge",  title: "A Távoli Üzenet",             desc: `Ha nem vagytok egy szobában, küldj egy hangüzenetet, amiben csak a lélegzeted hallatszik és egyetlen suttogott szó.`,  level: 2 },
+  { id: 71,  cat: "BDSM-lite",    title: "Puha Fogság",                 desc: `Rögzítsd a Befogadó bokáit egy puha sállal. Az Irányító csak a talpakat és a vádlikat kényeztetheti 5 percig.`,  level: 2, time: 300 },
+  { id: 72,  cat: "Roleplay",     title: "A Fotós és a Modell",         desc: `Az Irányító instrukciókat ad a Befogadónak, hogyan pózoljon. (Képek készítése nem kötelező, a pózolás ereje a lényeg.)`,  level: 2 },
+  { id: 73,  cat: "Hardcore",     title: "A Parancsoló Ujj",            desc: `Az Irányító egyetlen ujjával irányítja a Befogadó mozgását. Amerre az ujj mutat, oda kell a Befogadónak mozdulnia vagy csókolnia.`,  level: 3 },
+  { id: 74,  cat: "Sensory",      title: "Selyem és Bőr",               desc: `Húzz fel egy selyemkesztyűt (vagy használj egy selyemdarabot), és így simogasd végig a párod testét. A textúra különbsége elképesztő.`,  level: 1 },
+  { id: 75,  cat: "Psychology",   title: "A Kérés Jog",                 desc: `A Befogadó kérhet egyetlen dolgot, amit az Irányító köteles teljesíteni, feltéve, hogy az mindkettőjüknek kényelmes.`,  level: 1 },
+  { id: 76,  cat: "Roleplay",     title: "A Váratlan Vendég",           desc: `Az egyik fél a konyhában tevékenykedik. A másik 'idegenként" érkezik meg, és megpróbálja elcsábítani őt munka közben.`,  level: 2 },
+  { id: 77,  cat: "Sensory",      title: "Vizes Érintés",               desc: `A fürdőszobában az Irányító egy nedves, meleg törölközővel borítja be a Befogadó hátát, majd lassan, a törölközőn keresztül masszírozza.`,  level: 1 },
+  { id: 78,  cat: "Hardcore",     title: "Asztali Játék",               desc: `Üljetek a konyhaasztalhoz. Az Irányító az asztal alatt kényezteti a Befogadót, akinek közben egy pohár vizet kell rezzenéstelen arccal meginnia.`,  level: 3 },
+  { id: 79,  cat: "Psychology",   title: "A Megállított Idő",           desc: `Az Irányító bármikor kimondhatja: 'Fagyj meg!". A Befogadónak abban a pózban kell maradnia 1 percig, amit az Irányító alaposan végignézhet.`,  level: 2 },
+  { id: 80,  cat: "BDSM-lite",    title: "A Csukló-Teszt",              desc: `Az Irányító egyetlen kézzel rögzíti a Befogadó mindkét csuklóját a feje fölött. Csak a tekintetével és a leheletével ingerelheti 3 percig.`,  level: 2, time: 180 },
+  { id: 81,  cat: "Romantikus",   title: "Illat-utazás",                desc: `Az Irányító beköti a Befogadó szemét, és 3 különböző illatú dolgot (fűszer, parfüm, gyümölcs) tart az orra alá. Ki kell találnia őket a kényeztetésért cserébe.`,  level: 1 },
+  { id: 82,  cat: "Sensory",      title: "Borzongató Fém",              desc: `Keressetek egy hűvös fém tárgyat (pl. egy kanál hátulja). Az Irányító vezesse végig a Befogadó forró bőrén, a legérzékenyebb pontokon.`,  level: 2 },
+  { id: 83,  cat: "Roleplay",     title: "A Sofőr és az Utas",          desc: `Az autóban (álló helyzetben!) az Irányító diktálja a tempót, a Befogadónak pedig engedelmeskednie kell a szűk térben.`,  level: 3 },
+  { id: 84,  cat: "Hardcore",     title: "Parancs-Lánc",                desc: `Az Irányító 3 egymás utáni feladatot ad (pl. 'Vedd le a zoknid", 'Térdelj le", 'Nézz rám"). A Befogadónak szó nélkül kell végrehajtania.`,  level: 3 },
+  { id: 85,  cat: "Romantikus",   title: "Hajmosás",                    desc: `Az Irányító mossa meg a Befogadó haját a kádban vagy a zuhany alatt. Rendkívül intim és bizalmi feladat.`,  level: 1 },
+  { id: 86,  cat: "Psychology",   title: "A Ruha Hatalma",              desc: `Válasszatok egy ruhadarabot a párotoktól, amit felvesztek. Az egész estét ebben kell töltenetek, érezve a másik illatát.`,  level: 1 },
+  { id: 87,  cat: "Sensory",      title: "Vibráló Kanál",               desc: `Tegyél egy fémkanalat a mélyhűtőbe 2 percre. Utána használd az élét az érzékeny pontok finom érintésére.`,  level: 2 },
+  { id: 88,  cat: "BDSM-lite",    title: "Vezetett Kéz",                desc: `Az Irányító a Befogadó kezeit a háta mögött fogja össze, és így vezeti őt végig a lakáson a következő helyszínre.`,  level: 2 },
+  { id: 89,  cat: "Roleplay",     title: "A Szomszédok",                desc: `Játsszátok azt, hogy falon keresztül halljátok egymást, és kopogással vagy suttogással kell kommunikálnotok a vágyaitokról.`,  level: 1 },
+  { id: 90,  cat: "Hardcore",     title: "A 10 Másodperces Csók",       desc: `5 percen keresztül csak 10 másodpercenként érhet össze az ajkatok egyetlen pillanatra. A köztes idő a várakozásé.`,  level: 3, time: 300 },
+  { id: 91,  cat: "Sensory",      title: "Gyertyafényes Árnyék",        desc: `Kapcsoljátok le minden villanyt, csak egy gyertya égjen. Az Irányító mozgassa a kezét úgy, hogy az árnyékok táncoljanak a Befogadó testén.`,  level: 1 },
+  { id: 92,  cat: "Psychology",   title: "A Titkos Kívánság",           desc: `Írjatok le egy-egy cetlire egy vágyat. Cseréljétek el, de csak akkor olvashatjátok el, ha az app jelzi.`,  level: 2 },
+  { id: 93,  cat: "Hardcore",     title: "Néma Sikoly",                 desc: `A Befogadónak tilos bármilyen hangot kiadnia 10 perc kényeztetés alatt. Ha megszólal, az Irányító büntetést szabhat ki.`,  level: 3, time: 600 },
+  { id: 94,  cat: "Romantikus",   title: "Tenyér-Simítás",              desc: `Üljetek egymással szemben, érintsétek össze a tenyereteket, és ujjaitokat összefűzve mozgassátok őket lassú körökben.`,  level: 1 },
+  { id: 95,  cat: "Sensory",      title: "A Jég Olvadása",              desc: `Az Irányító tegyen egy jégkockát a saját szájába, és addig csókolja a Befogadó nyakát, amíg a jég teljesen el nem olvad.`,  level: 2 },
+  { id: 96,  cat: "Roleplay",     title: "A Ruhapróba",                 desc: `A Befogadónak 3 különböző szettet kell felpróbálnia, az Irányító pedig 'osztályozza" őket aszerint, mennyire találja vonzónak.`,  level: 2 },
+  { id: 97,  cat: "BDSM-lite",    title: "A Selyem Maszk",              desc: `Takarjátok le a Befogadó szemét. Az Irányító selyemmel dörzsölje át a testét, de minden ponton csak egyszer érhet hozzá.`,  level: 2 },
+  { id: 98,  cat: "Psychology",   title: "Az Irányított Érintés",       desc: `A Befogadó mozgatja az Irányító kezét magán, de az Irányító dönti el, milyen erősen nyomja rá a bőrre.`,  level: 2 },
+  { id: 99,  cat: "Hardcore",     title: "30 Perc Kontroll",            desc: `A következő fél órában minden, ami történik, kizárólag az Irányító döntése. A Befogadó csak 'élvezheti" a helyzetet.`,  level: 3, time: 1800 },
+  { id: 100, cat: "Romantikus",   title: "Az Éjszaka Ígérete",          desc: `Feküdjetek egymás mellé és suttogva köszönjétek meg egymásnak a mai játékot.`,  level: 1 },
+  { id: 101, cat: "Távoli",       title: "A Munkahelyi Titok",          desc: `Napközben küldj egy üzenetet: 'Most épp nem érhetlek el, de képzeld el, ahogy a kezem lassan végigsimít a combod belső felén..."`,  level: 2 },
+  { id: 102, cat: "Direkt",       title: "Orális Kontroll",             desc: `Az egyikőtök feküdjön le. A másik kezdje el az orális kényeztetést, de 30 másodpercenként abba kell hagynia, és megvárni, amíg a párja engedélyt ad a folytatásra.`,  level: 3 },
+  { id: 103, cat: "Távoli",       title: "Házi Feladat",                desc: `Küldj egy feladatot a párodnak, amit egyedül kell megcsinálnia (pl. 'Vegyél egy forró fürdőt és gondolj rám"), és kérj róla rövid beszámolót.`,  level: 2 },
+  { id: 104, cat: "Direkt",       title: "Csak a Szájjal",              desc: `Tiltott a kéz használata. Az egyikőtöknek csak az ajkaival és a nyelvével kell felfedeznie a másik legérzékenyebb pontjait 10 percen át.`,  level: 3, time: 600 },
+  { id: 105, cat: "Direkt",       title: "Az Ölelés (Gubanc)",          desc: `Fonódjatok össze szorosan. Az egyikőtöknek meg kell találnia a módot, hogy a teste egy bizonyos részével ritmikus nyomást gyakoroljon a másikra.`,  level: 2 },
+  { id: 106, cat: "Távoli",       title: "Ruha-kontroll",               desc: `Reggel válaszd ki a párod fehérneműjét. Egész nap tudni fogja, hogy te döntöttél arról, mi simul a bőréhez.`,  level: 2 },
+  { id: 107, cat: "Direkt",       title: "Orális Sivatag",              desc: `Az egyikőtök jégkockát tart a szájában, mielőtt orálisan kényeztetné a másikat. A hideg és a forró váltakozása legyen a fókuszban.`,  level: 3 },
+  { id: 108, cat: "Direkt",       title: "Kéz-bilincs (Saját)",         desc: `Az egyikőtöknek a saját kezeit a feje fölé kell szorítania, és tilos elengednie, amíg a másik csak a szájával kényezteti a mellkasát és a hasát.`,  level: 2 },
+  { id: 109, cat: "Távoli",       title: "Hangüzenet",                  desc: `Küldj egy 10 másodperces hangüzenetet, amiben csak a mély lélegzetvételed hallatszik, majd a végén suttogd el: 'Alig várom."`,  level: 2 },
+  { id: 110, cat: "Direkt",       title: "69-es Variáció",              desc: `Próbáljátok ki az oldalt fekvő 69-es pózt, de fókuszáljatok kizárólag a lassúságra. Aki először sietne, az vesztett.`,  level: 3 },
+  { id: 111, cat: "Érzéki",       title: "Lélegzet-vonal",              desc: `Az egyikőtök hajoljon a másik fölé, és fújjon meleg levegőt az érzékeny pontokra, de tilos a bőrhöz érni. Csak a levegő érinthet.`,  level: 2 },
+  { id: 112, cat: "Direkt",       title: "Csak Kézzel",                 desc: `Ma este az orális és a behatolás tilos. Csak a kezetekkel (és esetleg síkosítóval) kell eljuttatnotok egymást a csúcsig.`,  level: 3 },
+  { id: 113, cat: "Távoli",       title: "A 18:00-ás Parancs",          desc: `Pontban 6-kor küldj egy üzenetet: 'Mostantól ne viselj fehérneműt a ruhád alatt. Este ellenőrzöm."`,  level: 3 },
+  { id: 114, cat: "Direkt",       title: "Nyelv-tánc",                  desc: `Az egyikőtök az ujjával kényezteti a másikat, miközben a másik csak a nyelvével válaszolhat a partner ujjaira.`,  level: 3 },
+  { id: 115, cat: "Direkt",       title: "Orális Ritmus",               desc: `Az egyikőtök diktálja a tempót (pl. kopogással az ágytámlán), a másiknak pedig ehhez a ritmushoz kell igazítania az orális kényeztetést.`,  level: 3 },
+  { id: 116, cat: "Érzéki",       title: "Haj-markolat",                desc: `Az egyikőtök finoman kapaszkodjon a másik hajába, és gyengéden döntse hátra a fejét, miközben a nyakát csókolja.`,  level: 2 },
+  { id: 117, cat: "Távoli",       title: "Kép-részlet",                 desc: `Küldj egy közeli, sejtelmes képet egy testrészedről a párodnak napközben, minden szöveg nélkül.`,  level: 2 },
+  { id: 118, cat: "Direkt",       title: "A Csúcs Kapuja",              desc: `Vigyétek el egymást a végkifejletig, de az utolsó pillanatban álljatok meg. Várjatok 2 percet, és csak utána fejezzétek be.`,  level: 3, time: 120 },
+  { id: 119, cat: "Távoli",       title: "A Napközbeni Szabály",        desc: `Küldj egy üzenetet: 'Ma valahányszor eszedbe jutok, igyál egy korty vizet és simítsd végig a nyakad."`,  level: 1 },
+  { id: 120, cat: "Direkt",       title: "Csak a Nyelv",                desc: `Az egyikőtök keze hátra van kötve (vagy csak nem használja). A másiknak csak a nyelvével kell 5 percen át kényeztetnie a Befogadó testének egy kiválasztott pontját.`,  level: 3, time: 300 },
+  { id: 121, cat: "Távoli",       title: "Készülődési Parancs",         desc: `Üzenet: 'Mire hazaérek, légy a zuhany alatt és hagyd nyitva a fürdőszoba ajtót."`,  level: 3 },
+  { id: 122, cat: "Direkt",       title: "Váltott Tempó",               desc: `3 perc nagyon lassú, 3 perc gyors kényeztetés váltakozva. Az Irányító diktálja a váltásokat.`,  level: 3, time: 360 },
+  { id: 123, cat: "Direkt",       title: "Ujj-kontroll",                desc: `Az egyikőtök ujjával lassú köröket ír a másik legérzékenyebb pontjai körül, de csak minden harmadik körben érhet hozzá valóban.`,  level: 2 },
+  { id: 124, cat: "Direkt",       title: "Orális Kontroll (Irányított)", desc: `A Befogadó irányítja a párja fejét a kényeztetés közben.`,  level: 3 },
+  { id: 125, cat: "Távoli",       title: "Várakoztatás",                desc: `Üzenet: 'Ma este 9 előtt tilos hozzám érned, csak nézhetsz."`,  level: 3 },
+  { id: 126, cat: "Direkt",       title: "Közös Feloldozás",            desc: `A játék végén érjétek el a csúcsot egyszerre vagy szorosan egymás után.`,  level: 3 },
+  { id: 127, cat: "Direkt",       title: "Orális Lassítás",             desc: `Minden mozdulat tartson 10 másodpercig. A türelem a kulcs.`,  level: 3 },
+  { id: 128, cat: "Direkt",       title: "Csak a Tenyérrel",            desc: `Simogasd végig a párod csak a tenyeredet használva, ujjhegyek nélkül.`,  level: 2 },
+  { id: 129, cat: "Távoli",       title: "Kérdés-Felelek",              desc: `Küldj egy pikáns kérdést a párodnak, amire őszintén kell válaszolnia.`,  level: 2 },
+  { id: 130, cat: "Direkt",       title: "Néma Orális",                 desc: `Tilos bármilyen hangot kiadni a kényeztetés alatt.`,  level: 3 },
+  { id: 131, cat: "Érzéki",       title: "Fül-suttogás",                desc: `Mondd el a párodnak, mit fogsz vele tenni 5 perc múlva.`,  level: 2 },
+  { id: 132, cat: "Direkt",       title: "Vibráló Érintés",             desc: `Mozgasd az ujjaidat nagyon gyorsan egy pont felett, érintés nélkül.`,  level: 1 },
+  { id: 133, cat: "Romantikus",   title: "A Nap Hőse",                  desc: `Küldj egy bátorító üzenetet azért, mert a párod ma is helytállt.`,  level: 1 },
+  { id: 134, cat: "Romantikus",   title: "Végső Ölelés",                desc: `Az akció után maradjatok összefonódva legalább 10 percig.`,  level: 1, time: 600 },
+  { id: 135, cat: "Távoli",       title: "A Reggeli Ígéret",            desc: `Reggel küldj egy üzenetet: 'Ma egész nap arra fogok gondolni, hogyan érlek majd el először, amikor hazaérsz. Készülj fel."`,  level: 2 },
+  { id: 136, cat: "Direkt",       title: "Orális Hullámvasút",          desc: `Az egyikőtök kényeztesse a másikat szájjal, de a tempót a Befogadó lélegzetvételéhez kell igazítani: mély belégzésnél gyorsítás, kilégzésnél lassítás.`,  level: 3 },
+  { id: 137, cat: "Direkt",       title: "Csak az Ujjbegyek",           desc: `Az egyikőtöknek tilos a tenyerét használnia. Csak a tíz ujjhegyével 'zongorázhat" a másik legérzékenyebb pontjain 10 percen át.`,  level: 2, time: 600 },
+  { id: 138, cat: "Távoli",       title: "Képzeletbeli Érintés",        desc: `Napközben küldj egy rövid listát: 3 helyszín a testeden, ahol ma este várod a csókokat.`,  level: 2 },
+  { id: 139, cat: "Direkt",       title: "Orális Stop",                 desc: `Az egyikőtök kényezteti a másikat, de a Befogadónak minden alkalommal 'Stoppot" mondania, amikor túl közel kerül a csúcshoz. Legalább ötször.`,  level: 3 },
+  { id: 140, cat: "Szenzoros",    title: "Lebegtetés (Hover)",          desc: `Mozgasd az ujjaidat 1–2 mm-re a párod bőre felett. Ne érj hozzá, csak hagyd, hogy a hőt és az elektromosságot érezze. 5 percig tartson.`,  level: 1, time: 300 },
+  { id: 141, cat: "Direkt",       title: "Nyelv és Jég",                desc: `Tarts egy korty hideg vizet a szádban, majd végezz orális kényeztetést. A hideg és a nyelv melegének kontrasztja a lényeg.`,  level: 3 },
+  { id: 142, cat: "Távoli",       title: "Hangtalan Vágy",              desc: `Küldj egy képet a párodnak egy tárgyról, amit ma este használni fogsz rajta (pl. selyemsál, jégkockatartó).`,  level: 2 },
+  { id: 143, cat: "Direkt",       title: "5 Perc Néma Csönd",           desc: `5 perc intenzív kényeztetés, de egyikőtök nem adhat ki semmilyen hangot. Aki megszólal, az lesz a következő feladat Befogadója.`,  level: 2, time: 300 },
+  { id: 144, cat: "Direkt",       title: "A Falnál",                    desc: `Álljatok a falhoz. Az egyikőtök tartsa a másik mindkét kezét a falhoz szorítva, miközben csak az ajkaival dolgozik a nyakon és a füleken.`,  level: 3 },
+  { id: 145, cat: "Direkt",       title: "Orális Meglepetés",           desc: `A Befogadó csukott szemmel fekszik. A másiknak 3 különböző módon (lassú, gyors, pontszerű) kell kényeztetnie őt, amíg ki nem találja a kedvencét.`,  level: 3 },
+  { id: 146, cat: "Szenzoros",    title: "A Hajszárító Suttogása",      desc: `Használj langyos levegőt a hajszárítóból, hogy távolról cirógasd a párod nedves bőrét.`,  level: 1 },
+  { id: 147, cat: "Távoli",       title: "Esti Visszaszámlálás",        desc: `Küldj egy üzenetet 1 órával hazaérkezés előtt: 'Már csak 60 perc, és leveszem rólad az első réteget."`,  level: 2 },
+  { id: 148, cat: "Direkt",       title: "Nyelv-kontroll",              desc: `Az egyikőtök csak a nyelvével rajzoljon mintákat a másik hasára és combjára.`,  level: 2 },
+  { id: 149, cat: "Direkt",       title: "Orális Lassítás (Extreme)",   desc: `Minden egyes érintés tartson 20 másodpercig.`,  level: 3 },
+  { id: 150, cat: "Távoli",       title: "A Jövő Idő",                  desc: `Írd meg, mi lesz az első dolog, amit teszel, ha belépsz az ajtón.`,  level: 2 },
+  { id: 151, cat: "Direkt",       title: "Csak a Körmökkel",            desc: `(Finoman!) Húzd végig a körmeidet a párod hátán és karjain.`,  level: 2 },
+  { id: 152, cat: "Érzéki",       title: "Fül-csók",                    desc: `Koncentrálj kizárólag a fül és a nyak területére 10 percig.`,  level: 1, time: 600 },
+  { id: 153, cat: "Direkt",       title: "Orális Ritmus-váltás",        desc: `Az app jelzésére (rezgés) váltsatok tempót az orális kényeztetésnél.`,  level: 3 },
+  { id: 154, cat: "Távoli",       title: "Titkos Üzenet",               desc: `Küldj egy üzenetet, amit a párodnak csak a mosdóban szabad elolvasnia.`,  level: 2 },
+  { id: 155, cat: "Direkt",       title: "Végső Szimfónia",             desc: `Minden tanult technikát vessetek be az utolsó 10 percben.`,  level: 3, time: 600 },
+  { id: 156, cat: "Direkt",       title: "Közös Ritmus",                desc: `Az egyikőtök ujjaival, a másik pedig a lélegzetével diktálja a tempót, amíg teljesen egy ütemre nem mozogtok.`,  level: 2 },
+  { id: 157, cat: "Romantikus",   title: "A Kanapé Ölelése",            desc: `Az egyikőtök az ölébe veszi a másikat, és csak a karjaitokkal fonódjatok össze szorosan 5 percig.`,  level: 1, time: 300 },
+  { id: 158, cat: "Direkt",       title: "Az Utolsó Orális",            desc: `Egy nagyon lassú, odaadó kényeztetés, ahol a cél nem a sietség, hanem a másik minden rezdülésének megismerése.`,  level: 3 },
+  { id: 159, cat: "Szenzoros",    title: "Olajos Térkép",               desc: `Melegíts fel masszázsolajat a tenyeredben, és rajzold körbe a párod testét anélkül, hogy felemelnéd a kezed.`,  level: 1 },
+  { id: 160, cat: "Romantikus",   title: "Suttogott Titkok",            desc: `Feküdjetek egymás mellé a sötétben, és mondjatok 3 dolgot, ami a mai játékban a legjobban tetszett.`,  level: 1 },
+  { id: 161, cat: "Romantikus",   title: "Kéz a Kézben",                desc: `Az akció közben/után kulcsoljátok össze az ujjaitokat, és ne engedjétek el egymást, amíg a pulzusotok le nem nyugszik.`,  level: 1 },
+  { id: 162, cat: "Romantikus",   title: "A Kanál (Lassú)",             desc: `Feküdjetek egymás mögé. A hátsó fél lassan simogassa az elülső fél karjait és vállait, amíg el nem lazulnak.`,  level: 1 },
+  { id: 163, cat: "Romantikus",   title: "Homlok-érintés",              desc: `Érintsétek össze a homlokotokat lehunyt szemmel. Ne csináljatok semmit, csak érezzétek a másik jelenlétét 2 percig.`,  level: 1, time: 120 },
+  { id: 164, cat: "Direkt",       title: "Az Elégedettség Jele",        desc: `Az egyikőtök kényeztesse a másikat, amíg az el nem éri a teljes ellazulást, majd cseréljetek szerepet.`,  level: 3 },
+  { id: 165, cat: "Szenzoros",    title: "Tollpihe Levezetés",          desc: `Használj egy puha ecsetet vagy tollat a játék végén, hogy megnyugtasd a felkorbolt idegeket a bőrön.`,  level: 1 },
+  { id: 166, cat: "Romantikus",   title: "Köszönet",                    desc: `Nézz a párod szemébe, és mondd ki: 'Köszönöm, hogy ma is bízol bennem."`,  level: 1 },
+  { id: 167, cat: "Direkt",       title: "Az Utolsó Csók",              desc: `Egyetlen, nagyon hosszú, mély csók, ami legalább 2 percig tart.`,  level: 2, time: 120 },
+  { id: 168, cat: "Távoli",       title: "A Másnap Reggel",             desc: `(Ezt holnap reggel küldd el): 'Még mindig érzem az érintésedet a bőrömön. Alig várom a következőt."`,  level: 1 },
+  { id: 169, cat: "Romantikus",   title: "Edge: Bezárás",               desc: `Kapcsoljátok ki az appot, tegyétek le a telefont, és csak figyeljetek egymásra.`,  level: 1 },
+  // ── Pótlólag generált feladatok a 200-as kerethez ──
+  { id: 170, cat: "Sensory",      title: "Arcmasszázs",                 desc: `Az Irányító két hüvelykujjával lassan masszírozza a Befogadó halántékát, homlokát és állkapcsát. Csak a mosoly számít.`,  level: 1, time: 300 },
+  { id: 171, cat: "Psychology",   title: "A Szemtanú",                  desc: `Az Irányító 3 percig csendben figyeli a Befogadót, aki bármit csinálhat (könyvet olvas, vizet iszik). Csak a tekintet a fegyver.`,  level: 2, time: 180 },
+  { id: 172, cat: "Romantikus",   title: "Hangos Szív",                 desc: `Fektess a fejedet a párod mellkasára és 2 percig csak a szívverésére figyelj. Ennyi.`,  level: 1, time: 120 },
+  { id: 173, cat: "Roleplay",     title: "Az Első Este",                desc: `Játsszátok végig a 'legelső randevútok" forgatókönyvét, mintha ma találkoztatok volna először.`,  level: 2 },
+  { id: 174, cat: "BDSM-lite",    title: "Csuklóbilincs Kézzel",        desc: `Az Irányító a tenyerével szorítja le a Befogadó csuklóját az ágyra. 2 percig csak nézi.`,  level: 2, time: 120 },
+  { id: 175, cat: "Sensory",      title: "Meleg Olaj-csepp",            desc: `Melegíts tenyeredben pár csepp masszázsolajat, majd hagyd, hogy az olaj lassan legördüljön a Befogadó gerincén.`,  level: 2 },
+  { id: 176, cat: "Hardcore",     title: "Határidő",                    desc: `Az Irányítónak 5 perce van, hogy a Befogadót hangos reakcióra bírja. Csak kézzel. Ha nem sikerül, cserélnek.`,  level: 3, time: 300 },
+  { id: 177, cat: "Psychology",   title: "A Pozíció Tilalma",           desc: `Válasszatok ki egyet a kedvenc pozícióitok közül, amit ma este tilos alkalmazni. A korlát újraindítja a kreativitást.`,  level: 2 },
+  { id: 178, cat: "Romantikus",   title: "A Tenyér Melege",             desc: `Dörzsöld össze a tenyeredet, amíg forró nem lesz, majd helyezd a párod szívére. 60 másodperc csend.`,  level: 1, time: 60 },
+  { id: 179, cat: "Direkt",       title: "Kéz + Ajkak Egyszerre",       desc: `Az Irányító kézzel és szájjal egyszerre kényezteti a Befogadó két különböző pontját. A megosztott figyelem intenzitása a lényeg.`,  level: 3 },
+  { id: 180, cat: "Érzéki",       title: "Nyaki Zóna",                  desc: `Csak a nyakra koncentrálj 5 percig: csók, lehelet, fogak (gyengéden), ujjhegyek váltakozva.`,  level: 2, time: 300 },
+  { id: 181, cat: "Sensory",      title: "Textúra-térkép",              desc: `Gyűjtsetek össze 3 különböző felületű tárgyat (pl. bársony, durva törölköző, hideg tükör). Vezessétek végig mindhárömat a Befogadó karján.`,  level: 2 },
+  { id: 182, cat: "Távoli",       title: "Éjféli Üzenet",               desc: `Küldj egy üzenetet éjfél körül: 'Álmomban is te vagy. Holnap megmutatom."`,  level: 1 },
+  { id: 183, cat: "Roleplay",     title: "A Testőr",                    desc: `Az Irányító a Befogadó mögé áll, és mindenhová követi a lakásban. Tilos megszólalni, csak érinteni.`,  level: 2 },
+  { id: 184, cat: "Psychology",   title: "Az Ígéret Listája",           desc: `Írjatok fel 3–3 dolgot, amit egymásnak szeretnétek megadni a következő 7 napban. Olvassátok fel egymásnak.`,  level: 1 },
+  { id: 185, cat: "Hardcore",     title: "A Fagyos Perc",               desc: `Az Irányító bármikor kimondhatja: 'Most fagyj!" – a Befogadónak 60 másodpercig tilos bármilyen reakciót mutatnia, bármit is csinál az Irányító.`,  level: 3, time: 60 },
+  { id: 186, cat: "BDSM-lite",    title: "Ajándék-póz",                 desc: `A Befogadó 2 percig egy általa választott pózban marad mozdulatlanul. Az Irányító csak nézheti.`,  level: 2, time: 120 },
+  { id: 187, cat: "Sensory",      title: "Hőlégpárna",                  desc: `Az Irányító a tenyerét tartsa 2–3 cm-re a Befogadó hasa fölött 3 percig, mozgás nélkül. A sugárzó melegség meglepően intenzív.`,  level: 1, time: 180 },
+  { id: 188, cat: "Romantikus",   title: "Visszaszámlálás Csókkal",     desc: `Az Irányító számol visszafelé 10-től 1-ig. Minden számnál egyetlen csók egy másik helyre.`,  level: 1 },
+  { id: 189, cat: "Direkt",       title: "Csak a Csuklótól Lefelé",     desc: `10 percig az kezek (csukló, tenyér, ujjak) az egyetlen engedélyezett eszközök. Minden más érintés tilos.`,  level: 2, time: 600 },
+  { id: 190, cat: "Psychology",   title: "A Hiány",                     desc: `Az Irányító elmegy a szobából 3 percre. Mire visszajön, a Befogadónak meg kell mondania, mit hiányzott legjobban.`,  level: 2, time: 180 },
+  { id: 191, cat: "Érzéki",       title: "Gerincvonal",                 desc: `Az Irányító egyetlen ujjal rajzolja végig a Befogadó gerincét tetőtől talpig, nagyon lassan, háromszor egymás után.`,  level: 2 },
+  { id: 192, cat: "Hardcore",     title: "A Kihívás",                   desc: `A Befogadónak tilos megérintenie az Irányítót. Az Irányító 10 percig mindent megtehet, a Befogadónak passszívan kell maradnia.`,  level: 3, time: 600 },
+  { id: 193, cat: "Távoli",       title: "A Reggeli Feladat",           desc: `Reggel küldj egy feladatot: 'Egész nap ne keresztezd a karjaidat – legyen a tested nyitott felém."`,  level: 1 },
+  { id: 194, cat: "Romantikus",   title: "Lábmasszázs",                 desc: `Az Irányító 10 percig masszírozza a Befogadó lábfejét és vádliját. Semmi több, csak ez.`,  level: 1, time: 600 },
+  { id: 195, cat: "Sensory",      title: "Szemhéj-csók",                desc: `Csukott szemmel a Befogadó. Az Irányító rendkívül gyengéden csókolja meg mindkét szemhéját, majd az orrát, majd az állát. Csak ez.`,  level: 1 },
+  { id: 196, cat: "Psychology",   title: "A Tükör-monológ",             desc: `A Befogadó áll a tükör előtt. Az Irányító mögé lép, és csendben felsorol 5 dolgot, amit szépnek talál a párján. Érintés nélkül.`,  level: 1 },
+  { id: 197, cat: "BDSM-lite",    title: "Suttogó Parancs",             desc: `Az Irányító a Befogadó fülébe suttog egy egyszerű utasítást (pl. 'Fordulj el"). Ha a Befogadó engedelmeskedik, kap egy csókot. Ha nem, elveszíti azt.`,  level: 2 },
+  { id: 198, cat: "Direkt",       title: "A Négyszög",                  desc: `Az egyikőtök kézzel kényezteti a másikat, de csak egy képzeletbeli négyszögön belül (pl. hasaljtól a csípőig). Kimenni tilos.`,  level: 2 },
+  { id: 199, cat: "Romantikus",   title: "Elalvás Előtt",               desc: `Feküdjetek be egymás mellé. Az Irányító suttogva mesélje el a kedvenc közös emléküket, miközben finoman simogatja a párja karját.`,  level: 1 },
+  { id: 200, cat: "Romantikus",   title: "Edge: A Vég Kezdete",         desc: `Az app le van zárva. A telefon le van téve. Nézzetek egymásra, és kezdjétek elölről – app nélkül.`,  level: 1 },
+
+  // ── FANTÁZIA feladatok (251-265) ──
+  { id: 251, cat: "Fantázia",    mood: "tavoli", title: "A Visszatérés",          desc: `Írj egy üzenetet amelyben pontosan leírod mi lesz az első 10 perc amikor végre újra együtt vagytok. Minden részletet.`, level: 2 },
+  { id: 252, cat: "Fantázia",    mood: "tavoli", title: "A Reggeli Álom",         desc: `Írj le egy részletes fantáziát arról mit csinálnátok ha most egymás mellett ébrednétek. Küld el mielőtt felkel a párod.`, level: 2 },
+  { id: 253, cat: "Fantázia",    mood: "tavoli", title: "A Tiltott Gondolat",     desc: `Írj le egy olyan fantáziát amit eddig még soha nem mertél elmondani. Nem kell nagynak lennie. Csak legyen igaz.`, level: 3 },
+  { id: 254, cat: "Fantázia",    mood: "tavoli", title: "A Részletes Terv",       desc: `Írj egy üzenetet: ha holnap ott lennél mellette mit csinálnál az első perctől az utolsóig. Minél részletesebb annál jobb.`, level: 3 },
+  { id: 255, cat: "Fantázia",    mood: "tavoli", title: "A Kedvenc Emlék",        desc: `Írj le egy közös intim emléket amit a legtöbbször idézel fel. Mit éreztél? Mi volt a legjobb pillanat?`, level: 2 },
+  { id: 256, cat: "Fantázia",    mood: "tavoli", title: "Az Idegen Helyen",       desc: `Írj egy rövid fantáziát: egy ismeretlen városban egy hotelszobában. Nincs semmi kötelezettség. Csak ti ketten.`, level: 3 },
+  { id: 257, cat: "Fantázia",    mood: "tavoli", title: "A Lassú Délelőtt",       desc: `Képzeld el: szabad délelőtt kettesben. Nincs sietség. Írj le mindent amit szeretnél hogy történjen. Sorban.`, level: 2 },
+  { id: 258, cat: "Fantázia",    mood: "tavoli", title: "A Zuhany Után",          desc: `Írj egy rövid szöveget: bejön a fürdőszobából. Mit látsz? Mit érzel? Mi történik ezután?`, level: 3 },
+  { id: 259, cat: "Fantázia",    mood: "tavoli", title: "A Várakozás Fantáziája", desc: `Éppen hazafelé tart. Írj neki egy üzenetet arról mit fogsz tenni amikor belép az ajtón. Legyen konkrét.`, level: 3 },
+  { id: 260, cat: "Fantázia",    mood: "tavoli", title: "A Tükör Előtt",          desc: `Írj egy rövid jelenet-leírást: állsz a tükör előtt. Belép a szobába. Mi történik? Te vezeted a jelenetet.`, level: 3 },
+  { id: 261, cat: "Fantázia",    mood: "tavoli", title: "A Csendes Este",         desc: `Írj le egy olyan csendes intim estét amit még nem éltetek át de szeretnétek. Minden apró részlettel.`, level: 1 },
+  { id: 262, cat: "Fantázia",    mood: "tavoli", title: "Három Mondat",           desc: `Pontosan 3 mondatban írj le valamit amit ma nagyon szeretnél. Nem kell magyarázat. Csak a három mondat.`, level: 2 },
+  { id: 263, cat: "Fantázia",    mood: "tavoli", title: "A Hangod",               desc: `Küldj hangüzenetet. Csak suttogva. Mondd el mit szeretnél ma estére. Nem kell hosszú — 20 másodperc elég.`, level: 3 },
+  { id: 264, cat: "Fantázia",    mood: "tavoli", title: "Az Érintés Emléke",      desc: `Hangüzenetben mesélj el egy olyan érintést amit soha nem felejtesz. Hol volt? Mikor? Mit éreztél?`, level: 2 },
+  { id: 265, cat: "Fantázia",    mood: "tavoli", title: "A Kép Mögött",           desc: `Küldj egy képet valamiről ami most körülötted van — de írj mellé egy mondatot hogy miért jutottál eszébe.`, level: 1 },
+  // ── NAPKÖZBENI feladatok (266-280) ──
+  { id: 266, cat: "Napközbeni",  mood: "tavoli", title: "A 10:00-ás Szünet",      desc: `Pontban 10-kor menj ki egy percre. Gondolj rá. Majd küldj egy üzenetet: most arra gondoltam hogy...`, level: 1 },
+  { id: 267, cat: "Napközbeni",  mood: "tavoli", title: "Ebédszünet Titok",       desc: `Ebéd közben küldj egy képet az ételedről. De írj mellé valamit amit ma még nem mertél elmondani.`, level: 2 },
+  { id: 268, cat: "Napközbeni",  mood: "tavoli", title: "A Féltizenkettő",        desc: `11:30-kor küldj egy egyetlen mondatos üzenetet. Semmi több. Pl: Ma reggel arra ébredtem hogy hiányzol.`, level: 1 },
+  { id: 269, cat: "Napközbeni",  mood: "tavoli", title: "Munkaidő Parancs",       desc: `Küldj egy apró feladatot amit a párod munka közben titokban elvégezhet. Pl: Simítsd végig a nyakad és gondolj rám.`, level: 2 },
+  { id: 270, cat: "Napközbeni",  mood: "tavoli", title: "A Három Szó",            desc: `Küldj pontosan 3 szót. Semmi más. A párod tudja mit jelent.`, level: 1 },
+  { id: 271, cat: "Napközbeni",  mood: "tavoli", title: "Délutáni Emlékeztető",   desc: `14:00 körül küldj egy üzenetet: Ma este... és fejezd be a mondatot. Legyen konkrét és izgalmas.`, level: 2 },
+  { id: 272, cat: "Napközbeni",  mood: "tavoli", title: "A Titkos Feladat",       desc: `Adj a párodnak egy titkos feladatot a napra: pl egész nap ne viseljen fehérneműt. Este számolj be róla.`, level: 3 },
+  { id: 273, cat: "Napközbeni",  mood: "tavoli", title: "Kép Parancs",            desc: `Küldj egy üzenetet: Küldj nekem egy képet a... és fejezd be. Valami ami nem nyilvánvaló de pikáns.`, level: 2 },
+  { id: 274, cat: "Napközbeni",  mood: "tavoli", title: "Az Igaz Mondat",         desc: `Küldj egy mondatot amely teljesen igaz és amit ritkán mondasz ki. Nem kell romantikusnak lennie. Csak igaznak.`, level: 1 },
+  { id: 275, cat: "Napközbeni",  mood: "tavoli", title: "Visszaszámlálás",        desc: `Reggel kezdj el visszaszámolni: X óra van hátra. Minden 2 órában küldj egy üzenetet a visszaszámlálóval.`, level: 2 },
+  { id: 276, cat: "Napközbeni",  mood: "tavoli", title: "A Nap Feladata",         desc: `Reggel adj egy egész napra szóló feladatot: valahányszor megiszik egy pohár vizet gondoljon rád és küldjön egy szívet.`, level: 1 },
+  { id: 277, cat: "Napközbeni",  mood: "tavoli", title: "Hangos Gondolat",        desc: `Küldj egy max 15 másodperces hangüzenetet. Csak mondd el hangosan amit most gondolsz. Semmi szerkesztés.`, level: 2 },
+  { id: 278, cat: "Napközbeni",  mood: "tavoli", title: "A Váratlan Kép",         desc: `Küldj egy képet ami rád jellemző és amire a párod mosolyog. Semmi szöveg mellé.`, level: 1 },
+  { id: 279, cat: "Napközbeni",  mood: "tavoli", title: "Este Előtt",             desc: `16:00 után küldj egy rövid üzenetet arról mi vár rá ma este. Legyen benne egy konkrét ígéret.`, level: 2 },
+  { id: 280, cat: "Napközbeni",  mood: "tavoli", title: "A Nap Legjobb Perce",    desc: `Este küldj egy üzenetet: A mai nap legjobb perce az volt amikor... és fejezd be. Legyen benne a párod.`, level: 1 },
+  // ── MÉLY feladatok (281-293) ──
+  { id: 281, cat: "Mély",        mood: "mely",   title: "A Félelem Kimondása",    desc: `Mondd el a párodnak mi az amit ebben a kapcsolatban néha félsz elveszíteni. Nem kell megoldás. Csak mondd el.`, level: 2 },
+  { id: 282, cat: "Mély",        mood: "mely",   title: "Az Első Pillanat",       desc: `Meséld el pontosan mit gondoltál az első alkalommal amikor fizikailag közel kerültetek egymáshoz.`, level: 1 },
+  { id: 283, cat: "Mély",        mood: "mely",   title: "A Láthatatlan Dolog",    desc: `Mondj el valamit ami fontos neked a kapcsolatban de amiről soha nem beszéltek. Valami amit feltételezed hogy ő is érez.`, level: 2 },
+  { id: 284, cat: "Mély",        mood: "mely",   title: "A Testről",              desc: `Mondd el a párodnak mi az a része a testének amit a legtöbbször észreveszel és miért. Legyen őszinte.`, level: 2 },
+  { id: 285, cat: "Mély",        mood: "mely",   title: "A Legjobb Döntés",       desc: `Mindketten mondjatok egy döntést amit a másik hozott és ami pozitívan érintette az életeteket.`, level: 1 },
+  { id: 286, cat: "Mély",        mood: "mely",   title: "Az Ismeretlen Rész",     desc: `Kérdezz rá valamire a párodról amit még nem tudsz. Nem felszínes kérdés — valami ami valóban érdekel.`, level: 1 },
+  { id: 287, cat: "Mély",        mood: "mely",   title: "A Változás",             desc: `Mondd el hogyan változtatta meg a párod a szemléletedet valamiről. Konkrét példával.`, level: 1 },
+  { id: 288, cat: "Mély",        mood: "mely",   title: "A Bizalom Pillanata",    desc: `Meséld el azt a pillanatot amikor először érezted hogy teljesen megbízol ebben a személyben.`, level: 2 },
+  { id: 289, cat: "Mély",        mood: "mely",   title: "Test és Érzelem",        desc: `Van-e összefüggés számodra az intimitás és az érzelmi közelség között? Mondd el hogyan működik ez nálad.`, level: 2 },
+  { id: 290, cat: "Mély",        mood: "mely",   title: "A Nem Kimondott Köszönet", desc: `Mondj köszönetet valamiért amit a párod csinál de amiért ritkán kapott elismerést. Legyen konkrét.`, level: 1 },
+  { id: 291, cat: "Mély",        mood: "mely",   title: "A Jövő Képe",            desc: `Mesélj el egy konkrét képet a jövőről amiben benne van a párod. Hol vagytok? Mit csináltok? Hogyan érzed magad?`, level: 1 },
+  { id: 292, cat: "Mély",        mood: "mely",   title: "Az Igény Kimondása",     desc: `Mondd el a párodnak pontosan mire van most szükséged tőle. Nem általánosságban — most, ebben az időszakban.`, level: 2 },
+  { id: 293, cat: "Mély",        mood: "mely",   title: "A Csend Jelentése",      desc: `Feküdjetek vagy üljetek egymás mellett csendben 5 percig. Utána mindenki mondja el mit gondolt.`, level: 1, time: 300 },
+  // ── VAD feladatok (294-305) ──
+  { id: 294, cat: "Vad",         mood: "vad",    title: "Az Állat",               desc: `Nincs lassúság nincs finomkodás. Az Irányító 3 percig azt csinál amit akar. A Befogadó befogad.`, level: 3 },
+  { id: 295, cat: "Vad",         mood: "vad",    title: "A Falhoz",               desc: `Felállsz. Odamész. Odaszorítod. Semmi más instrukció.`, level: 3 },
+  { id: 296, cat: "Vad",         mood: "vad",    title: "Ruha Marad",             desc: `Minden marad ami rajtatok van. Csak a minimális kerül le. Az akadályok fokozzák az izgalmat.`, level: 3 },
+  { id: 297, cat: "Vad",         mood: "vad",    title: "Az Első Ösztön",         desc: `Ne gondolkodj. Az első ösztönöd amit érzel a párod láttán — csináld meg. Most.`, level: 3 },
+  { id: 298, cat: "Vad",         mood: "vad",    title: "A Kontroll Elengedése",  desc: `5 percig az Irányító dönt mindent — pozíció, tempó, erő. A Befogadónak tilos bármit irányítani.`, level: 3, time: 300 },
+  { id: 299, cat: "Vad",         mood: "vad",    title: "Gyors és Intenzív",      desc: `Nincs előjáték. Nincs lassítás. 5 perc maximális intenzitás. Aztán csend.`, level: 3, time: 300 },
+  { id: 300, cat: "Vad",         mood: "vad",    title: "A Hang",                 desc: `Ma nem kell csendben maradni. Ellenkezőleg — minél hangosabb annál jobb. Senki ne fojtsa el magát.`, level: 3 },
+  { id: 301, cat: "Vad",         mood: "vad",    title: "A Meglepetés Támadás",   desc: `Az egyik fél bármikor és bárhol a lakásban meglepetésszerűen kezdeményez. A másik nem utasíthatja vissza.`, level: 3 },
+  { id: 302, cat: "Vad",         mood: "vad",    title: "Nem az Ágyon",           desc: `Az app kisorsolja a helyszínt. Szoba: ${['konyha','fürdőszoba','nappali','folyosó','erkély'][Math.floor(Math.random()*5)]}. Ott kell maradni.`, level: 3 },
+  { id: 303, cat: "Vad",         mood: "vad",    title: "Az Erő Játéka",          desc: `Az Irányító fizikailag domináns — tartja, fogja, irányítja. A Befogadó ellenáll amíg bírja majd megadja magát.`, level: 3 },
+  { id: 304, cat: "Vad",         mood: "vad",    title: "Csak a Test",            desc: `Nincs szó. Nincs hang. Csak a testetek kommunikál egymással. 10 percig néma intenzitás.`, level: 3, time: 600 },
+  { id: 305, cat: "Vad",         mood: "vad",    title: "A Visszaszámlálás",      desc: `Az Irányító hangosan számol 60-tól 1-ig. Ennyi az előjáték. A 0-nál kezdődik az igazi.`, level: 3, time: 60 },
+  // ── JÁTÉKOS feladatok (306-315) ──
+  { id: 306, cat: "Játékos",     mood: "jatekos", title: "A Fogadás",             desc: `Fogadjatok valamiben. A vesztes teljesít egy tetszőleges kérést. A tét ti döntsétek el.`, level: 2 },
+  { id: 307, cat: "Játékos",     mood: "jatekos", title: "Igazság vagy Merészség", desc: `Felváltva kérdeztek egymástól. Igazságra kell válaszolni vagy teljesíteni kell a merészséget.`, level: 2 },
+  { id: 308, cat: "Játékos",     mood: "jatekos", title: "A Szerep Csere",        desc: `15 percig a Befogadó az Irányító és fordítva. Mindenki a másik szerepét játssza.`, level: 2, time: 900 },
+  { id: 309, cat: "Játékos",     mood: "jatekos", title: "Dobókocka Dönt",        desc: `Dobjatok felváltva. Páros: az Irányító választ feladatot. Páratlan: a Befogadó. 6 dobás.`, level: 2 },
+  { id: 310, cat: "Játékos",     mood: "jatekos", title: "A Nevető Veszít",       desc: `Az Irányító mindent megpróbál hogy a másikat megnevettesse. Aki nevet először veszít és teljesít egy kérést.`, level: 2 },
+  { id: 311, cat: "Játékos",     mood: "jatekos", title: "Vakon Vezet",           desc: `Bekötött szemmel az Irányító elvezeti a Befogadót a lakás egyik végéből a másikba. Közben mindent megérinthet.`, level: 2 },
+  { id: 312, cat: "Játékos",     mood: "jatekos", title: "A Kitalálós",           desc: `Az Irányító gondol valamire amit csinálni szeretne. A Befogadó igen-nem kérdésekkel kitalálja. Ha sikerül ő kérheti.`, level: 1 },
+  { id: 313, cat: "Játékos",     mood: "jatekos", title: "Hang Nélküli Kérés",    desc: `Az egyik fél csak gesztusokkal és mimikával kommunikálja amit szeretne. A másik értelmezi.`, level: 1 },
+  { id: 314, cat: "Játékos",     mood: "jatekos", title: "Az Időzített Csók",     desc: `Az app 30 másodpercet indít. Ennyi ideig tart a csók. Aki elhúzódik előbb veszít.`, level: 1, time: 30 },
+  { id: 315, cat: "Játékos",     mood: "jatekos", title: "A Szín Játék",          desc: `Minden szín egy dolgot jelent: piros = csók, kék = érintés, sárga = suttogás. Öltözzetek fel és játsszátok.`, level: 2 },
+  // ── ÚJ FELADATOK (201-250) ──
+  { id: 201, cat: "Távoli",     title: "Élő Parancs",               desc: `Videóhívás közben az Irányító instrukciókat ad. A Befogadónak követnie kell őket miközben a kamera be van kapcsolva.`, level: 3 },
+  { id: 202, cat: "Távoli",     title: "Szinkron Fürdő",             desc: `Pontosan 21:00-kor mindketten bemegyetek a fürdőbe. Telefon nincs. Utána leírjátok egymásnak mire gondoltatok.`, level: 2 },
+  { id: 203, cat: "Távoli",     title: "A Csomag",                   desc: `Az Irányító előre elrejt egy kis cetlit a másik táskájában. A megtalálás pillanatát fotón kell elküldeni.`, level: 1 },
+  { id: 204, cat: "Távoli",     title: "Párhuzamos Érintés",         desc: `Videóhívás közben mindketten egyszerre érintitek meg ugyanazt a testrészt magatokon. A másik nézi.`, level: 2 },
+  { id: 205, cat: "Távoli",     title: "Az Esti Misszió",            desc: `Az Irányító reggel küld egy 3 pontos napirendet: 10:00 gondolj rám, 14:00 nézd meg magad a tükörben, 19:00 küldd el a kedvenc illatod nevét.`, level: 2 },
+  { id: 206, cat: "Távoli",     title: "Hangos Kérés",               desc: `Hangüzenet amiben a Befogadónak hangosan kell kimondania mit szeretne ma estére. Nem gépelve, szóban.`, level: 3 },
+  { id: 207, cat: "Távoli",     title: "Közös Film",                 desc: `Ugyanazt a filmet nézitek egyszerre külön helyen. Az Irányító megmondja melyik jelenetnél kell üzenni.`, level: 1 },
+  { id: 208, cat: "Távoli",     title: "Fantázialevél",              desc: `Az Irányító megír egy rövid 5-8 mondatos fantáziaszöveget arról mi történne ha most ott lenne. A Befogadó olvassa el hangosan.`, level: 3 },
+  { id: 209, cat: "Távoli",     title: "A Nap Képe",                 desc: `Minden nap amíg távol vagytok: egy fotó a testről amit a másik választ meg. Pl. ma a kulcscsontodat akarom látni.`, level: 2 },
+  { id: 210, cat: "Távoli",     title: "A Hangos Álom",              desc: `Lefekvés előtt az Irányító küld egy hangüzenetet amiben elmesél egy fantáziát. A Befogadó ezt hallgatja el fülhallgatóval.`, level: 3 },
+  { id: 211, cat: "Távoli",     title: "Virtuális Vacsora",          desc: `Videóhívás alatt vacsoráztok egyszerre. Az Irányító minden fogás között mond egyet amit estére tervez.`, level: 1 },
+  { id: 212, cat: "Távoli",     title: "Az Útmutató",                desc: `Az Irányító szöveges instrukciót küld: pontosan hogyan milyen sorrendben milyen tempóban kell a Befogadónak magát megérintenie.`, level: 3 },
+  { id: 213, cat: "Távoli",     title: "A Zene-parancs",             desc: `Az Irányító küld egy dalt. A Befogadónak hallgatva kell elvégeznie egy megadott mozdulatot. Pl. hallgasd végig miközben a kezed a nyakadon van.`, level: 2 },
+  { id: 214, cat: "Távoli",     title: "Tükör-hívás",                desc: `Videóhívás alatt a Befogadó kamera elé áll és az Irányító irányítja mit mutasson meg.`, level: 3 },
+  { id: 215, cat: "Távoli",     title: "A Reggeli Szabály",          desc: `Reggel küldj egy egyszerű szabályt amit a párodnak egész nap be kell tartania. Pl. minden órakor gondolj rám 10 másodpercig.`, level: 2 },
+  { id: 216, cat: "Szenzoros",  title: "Selymesített Kéz",           desc: `Kend be a kezedet testápolóval vagy olajjal és csak így érj a párodhoz 10 percig. Az extra síkosság teljesen megváltoztatja az érintést.`, level: 1, time: 600 },
+  { id: 217, cat: "Szenzoros",  title: "Jeges Nyak",                 desc: `Tarts egy jégkockát a nyakad hajlatában 30 másodpercig amíg a párod figyel. Majd ő melegíti vissza az ajkaival.`, level: 2 },
+  { id: 218, cat: "Szenzoros",  title: "Vak Textúra",                desc: `Bekötött szemmel a Befogadónak meg kell mondania milyen anyag érinti éppen a bőrét. Gyűjts össze 5 különböző textúrát.`, level: 1 },
+  { id: 219, cat: "Szenzoros",  title: "Forró Kanál",                desc: `Meríts egy fémkanalat forró vízbe 30 másodpercre. Tesztelj a saját csuklódon hogy ne legyen túl forró. Majd vezessd végig a párod hátán.`, level: 2 },
+  { id: 220, cat: "Szenzoros",  title: "Száraz Ecset",               desc: `Egy száraz festőecsettel nagyon lassan rajzolj köröket a párod mellkasán és hasán. Az ecset hegye meglepően intenzív érzést kelt.`, level: 2 },
+  { id: 221, cat: "Szenzoros",  title: "Bőr és Lehelet",             desc: `Az Irányító fújjon nagyon lassan meleg levegőt a Befogadó nyakán gerincvonalán végig anélkül hogy hozzáérne. Csak a légmozgás számít.`, level: 2 },
+  { id: 222, cat: "Szenzoros",  title: "Szőrzet-irány",              desc: `Az Irányító az ujjbegyével simogassa végig a Befogadó karját egyszer a szőrzet irányában egyszer ellene. A különbség megdöbbentő.`, level: 1 },
+  { id: 223, cat: "Szenzoros",  title: "Méz-cseppek",                desc: `Cseppents egy kevés mézet a párod kulcscsontjára vagy vállára. Majd nagyon lassan kövess minden cseppet az ajkaiddal.`, level: 3 },
+  { id: 224, cat: "Szenzoros",  title: "Rezgés-pont",                desc: `Tedd a vibráló telefont a párod valamelyik ízületére: csukló, váll, térd. Érezze a rezgést 1 percig.`, level: 1, time: 60 },
+  { id: 225, cat: "Szenzoros",  title: "Hideg Üveg",                 desc: `Egy hideg vizes üveget görgess végig a párod hátán és oldalán. A kerekített forma és a hőmérséklet együtt rendkívüli érzés.`, level: 2 },
+  { id: 226, cat: "Szenzoros",  title: "Körmök és Tenyér",           desc: `Váltogasd: 10 körömhúzás a háton majd 10 tenyérsimítás. A kontraszt fokozza mindkét érzetet.`, level: 2 },
+  { id: 227, cat: "Szenzoros",  title: "Párna-nyomás",               desc: `Egy puha párna segítségével az Irányító egyenletes nyomást gyakorol a Befogadó hátára. 3 percig mozdulatlanul tartja.`, level: 1, time: 180 },
+  { id: 228, cat: "Szenzoros",  title: "Arc és Ujjak",               desc: `Az Irányító mind a 10 ujjával egyszerre érinti meg a Befogadó arcát és nagyon lassan húzódik le a nyakáig. Csak egyszer.`, level: 2 },
+  { id: 229, cat: "Hardcore",   title: "Visszaszámlálás Tiltással",  desc: `Az Irányító hangosan számol 10-től 1-ig. A Befogadónak tilos bármilyen hangot kiadnia amíg el nem éri az 1-et.`, level: 3, time: 30 },
+  { id: 230, cat: "Hardcore",   title: "A Fal Módszer",              desc: `A Befogadó áll a falnál. Az Irányító mindkét kezét a fal felé szorítja és csak a testével érhet hozzá. Kéz és száj tilos.`, level: 3 },
+  { id: 231, cat: "Hardcore",   title: "Kettős Tilalom",             desc: `Az Irányító kijelöl két pontot a Befogadó testén. 20 percig mindkettő érintése tilos. Minden más elérhető.`, level: 3, time: 1200 },
+  { id: 232, cat: "Hardcore",   title: "Visszautasítás Tiltva",      desc: `A következő 15 percben a Befogadónak kötelező igent mondania minden kérésre ami a saját határain belül van.`, level: 3, time: 900 },
+  { id: 233, cat: "Hardcore",   title: "Egy Ujj Szabály",            desc: `Az Irányítónak 10 percig mindent egyetlen ujjal kell csinálnia. Sem tenyér sem más ujj. Az önkorlátozás felszabadít.`, level: 3, time: 600 },
+  { id: 234, cat: "Hardcore",   title: "Hangos Instrukció",          desc: `Az Irányító hangosan mondja el minden szándékát mielőtt megtenné. A Befogadó hallgatja és várja.`, level: 3 },
+  { id: 235, cat: "Hardcore",   title: "A Lassú Vetkőztetés",        desc: `Az Irányítónak minden ruhadarab levétele között 3 percet kell várnia. A várakozás alatt csak nézheti a másikat.`, level: 3, time: 180 },
+  { id: 236, cat: "Hardcore",   title: "Teszt",                      desc: `A Befogadónak 5 percig egy tetszés szerinti pózban kell maradnia miközben az Irányító pontosan azt teszi amit akar. Tilos mozdulni.`, level: 3, time: 300 },
+  { id: 237, cat: "Hardcore",   title: "Négyszer Stop",              desc: `A Befogadónak legalább 4-szer kell Stoppot mondania az est folyamán. Minden stop után 60 másodperc szünet kötelező.`, level: 3 },
+  { id: 238, cat: "Hardcore",   title: "Parancs-Sorozat",            desc: `Az Irányító 5 egymás utáni utasítást ad gyors egymásutánban. A Befogadónak szó nélkül és azonnal kell teljesítenie mindet.`, level: 3 },
+  { id: 239, cat: "Hardcore",   title: "Tükör-Kontroll",             desc: `A Befogadó a tükör előtt áll. Az Irányító mögé áll és irányítja minden mozdulatát. A Befogadó csak a tükörben láthatja a másikat.`, level: 3 },
+  { id: 240, cat: "Hardcore",   title: "Az Utolsó Döntés",           desc: `Ma este minden döntést az Irányító hoz: pozíció, tempó, helyszín. A Befogadó csak egyetlen szóval kommunikálhat: igen.`, level: 3 },
+  { id: 241, cat: "Psychology", title: "A Hiány Kísérlete",          desc: `Az Irányító elmegy a szobából pontosan 5 percre. Mire visszajön a Befogadónak le kell írnia mit gondolt minden percben.`, level: 2, time: 300 },
+  { id: 242, cat: "Psychology", title: "Három Szó",                  desc: `Mindketten írjatok le 3 szót ami leírja mit éreztek egymás iránt most ebben a pillanatban. Felváltva olvassátok fel.`, level: 1 },
+  { id: 243, cat: "Psychology", title: "Képzeletbeli Érintés",       desc: `Feküdjetek egymás mellé anélkül hogy megérintenétek egymást. Az Irányító hangosan leírja mit tenne ha most megérinthetné a másikat.`, level: 2 },
+  { id: 244, cat: "Psychology", title: "Kontroll Csere",             desc: `Az este első felében az egyik az Irányító. Pontosan félúton szerepet cseréltek. Érezd meg mindkét oldalt.`, level: 2 },
+  { id: 245, cat: "Psychology", title: "A Legutóbbi Álom",           desc: `Meséld el a párodnak a legutóbbi olyan álmodat amiben ő szerepelt. Ha nem volt ilyen találj ki egyet most.`, level: 1 },
+  { id: 246, cat: "Psychology", title: "Féltékenység-Játék",         desc: `Az Irányító leír egy valós vagy kitalált szituációt amiben a Befogadó féltékeny lehetne. A Befogadónak el kell mondania pontosan mit érezne.`, level: 2 },
+  { id: 247, cat: "Psychology", title: "A Tiltott Gondolat",         desc: `Mindketten mondjatok el egy gondolatot amit eddig soha nem mertetek kimondani egymásnak. Nem kell nagynak lennie.`, level: 2 },
+  { id: 248, cat: "Psychology", title: "Idő-Zár",                    desc: `Az app 7 percet indít. Ez alatt tilos a jövőről vagy a múltról beszélni. Csak a jelen pillanat számít.`, level: 1, time: 420 },
+  { id: 249, cat: "Psychology", title: "A Legszebb Hiba",            desc: `Mindketten mondjatok el egy hibát amit a másik csinált amire titokban büszkék vagytok vagy mosolygásra késztet.`, level: 1 },
+  { id: 250, cat: "Psychology", title: "Vágy-Aukció",                desc: `Mindketten írjatok fel 3 vágyat amit a másiktól kérhetnétek. Cseréljétek el a listát. Ebből az estéből egyet teljesítetek.`, level: 2 }
+
+];
+
+// ═══════════════════════════════════════════════════════
+//  ÁLLAPOT
+// ═══════════════════════════════════════════════════════
+let inputBuffer   = '';
+let selectedMood  = null;
+let moodStep      = 0;
+let seenIds       = [];
+let feedbackData  = {};
+let activeSeries  = null;
+let seriesQueue   = [];
+let seriesStep    = 0;
+let timerInterval = null;
+let timerSeconds  = 0;
+let pairCode      = null;
+let myRole        = null;
+let pollTimer     = null;
+let lastTaskId    = null;
+
+const MOOD_TOTAL  = 5;
+const TAVOLI_CATS = ['Fantázia','Napközbeni','Távoli'];
+
+const moodFilters = {
+    jatekos: { cats: ['Játékos','Roleplay','Public Edge'],                  levels: [1,2,3] },
+    intim:   { cats: ['Romantikus','Szenzoros','Sensory','Érzéki','Mély'],  levels: [1,2]   },
+    vad:     { cats: ['Vad','Hardcore','BDSM-lite','Direkt'],               levels: [2,3]   },
+    mely:    { cats: ['Mély','Psychology','Romantikus'],                    levels: [1,2]   },
+    lassu:   { cats: ['Romantikus','Sensory','Szenzoros','Érzéki'],         levels: [1]     }
+};
+
+const moodLabels = {
+    jatekos: '😈 Játékos',
+    intim:   '🌹 Intim',
+    vad:     '⚡ Vad',
+    mely:    '🌊 Mély',
+    lassu:   '✨ Lassú'
+};
+
+const seriesDefinitions = {
+    lassu:      { cats: ['Romantikus','Sensory','Szenzoros','Érzéki'], levels: [1],     count: 5 },
+    feszultseg: { cats: ['Psychology','BDSM-lite'],                    levels: [2,3],   count: 5 },
+    teljes:     { ordered: [
+        { cats: ['Romantikus'],           levels: [1]   },
+        { cats: ['Sensory','Szenzoros'],  levels: [1,2] },
+        { cats: ['Roleplay'],             levels: [2]   },
+        { cats: ['BDSM-lite'],            levels: [2]   },
+        { cats: ['Hardcore'],             levels: [3]   },
+        { cats: ['Direkt'],               levels: [3]   }
+    ]},
+    meglepetes: { cats: null, levels: null, count: 5 }
+};
+
+const tavoliModes = {
+    napkozbeni: { cats: ['Napközbeni'],                             count: 5 },
+    fantazia:   { cats: ['Fantázia'],                               count: 5 },
+    este:       { cats: ['Távoli'],       levels: [1,2],            count: 5 },
+    mely:       { cats: ['Mély'],                                   count: 5 },
+    vegyes:     { cats: ['Fantázia','Napközbeni','Távoli','Mély'],  count: 6 }
+};
+
+// ═══════════════════════════════════════════════════════
+//  SZÁMOLÓGÉP
+// ═══════════════════════════════════════════════════════
+function calc(num) {
+    inputBuffer += String(num);
+    document.getElementById('calc-display').innerText = inputBuffer;
+}
+function resetCalc() {
+    inputBuffer = '';
+    document.getElementById('calc-display').innerText = '0';
+}
+function unlock() {
+    if (inputBuffer.trim() === '77') {
+        inputBuffer = '';
+        document.getElementById('ghost-app').classList.add('hidden');
+        if (navigator.vibrate) navigator.vibrate([100,50,200]);
+        if (checkStoredLicense()) {
+            document.getElementById('mood-screen').classList.remove('hidden');
+            loadFeedback();
+        } else {
+            document.getElementById('license-screen').classList.remove('hidden');
+        }
+    } else {
+        resetCalc();
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+//  NAVIGÁCIÓ
+// ═══════════════════════════════════════════════════════
+function hideAllScreens() {
+    ['ghost-app','license-screen','mood-screen','tavoli-screen',
+     'series-screen','main-app','pair-screen','timer-overlay'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+    });
+}
+function showMainApp() {
+    hideAllScreens();
+    document.getElementById('main-app').classList.remove('hidden');
+    updateActiveMoodBar();
+}
+function showMoodScreen() {
+    hideAllScreens();
+    document.getElementById('mood-screen').classList.remove('hidden');
+}
+function showTavoliScreen() {
+    hideAllScreens();
+    document.getElementById('tavoli-screen').classList.remove('hidden');
+}
+function showSeriesScreen() {
+    hideAllScreens();
+    document.getElementById('series-screen').classList.remove('hidden');
+}
+function showPairScreen() {
+    hideAllScreens();
+    document.getElementById('pair-screen').classList.remove('hidden');
+}
+function safeWord() {
+    stopTimer();
+    if (pollTimer) clearInterval(pollTimer);
+    hideAllScreens();
+    document.getElementById('ghost-app').classList.remove('hidden');
+    document.getElementById('calc-display').innerText = '0';
+    inputBuffer = '';
+}
+
+// ═══════════════════════════════════════════════════════
+//  HANGULAT
+// ═══════════════════════════════════════════════════════
+function selectMood(mood) {
+    document.querySelectorAll('.mood-opt').forEach(el => el.classList.remove('selected'));
+    const el = document.getElementById('mood-' + mood);
+    if (el) el.classList.add('selected');
+    selectedMood = mood;
+}
+function skipMood() {
+    selectedMood = null;
+    showMainApp();
+}
+function startWithMood() {
+    moodStep = 1;
+    showMainApp();
+    updateActiveMoodBar();
+    if (selectedMood && moodFilters[selectedMood]) {
+        const f = moodFilters[selectedMood];
+        if (f.levels && f.levels.length > 0) {
+            const avg = Math.round(f.levels.reduce((a,b)=>a+b,0)/f.levels.length);
+            document.getElementById('mood-slider').value = Math.min(3,Math.max(1,avg));
+            updateSliderLabel();
+        }
+    }
+    nextTask();
+}
+function changeMood() {
+    selectedMood = null;
+    moodStep = 0;
+    document.querySelectorAll('.mood-opt').forEach(el => el.classList.remove('selected'));
+    document.getElementById('series-progress').style.display = 'none';
+    showMoodScreen();
+}
+function updateActiveMoodBar() {
+    const bar   = document.getElementById('active-mood-bar');
+    const label = document.getElementById('active-mood-label');
+    if (!bar || !label) return;
+    if (selectedMood && moodLabels[selectedMood]) {
+        bar.style.display   = 'flex';
+        label.textContent   = moodLabels[selectedMood];
+    } else {
+        bar.style.display   = 'none';
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+//  FELADAT LOGIKA
+// ═══════════════════════════════════════════════════════
+function getPool() {
+    const level   = parseInt(document.getElementById('mood-slider').value);
+    const skipped = Object.keys(feedbackData).filter(id => feedbackData[id]==='skip').map(Number);
+
+    let pool;
+    if (selectedMood && moodFilters[selectedMood]) {
+        const f = moodFilters[selectedMood];
+        // Hangulat + szint + távoli kizárás
+        pool = tasksDatabase.filter(t => {
+            if (skipped.includes(t.id)) return false;
+            if (TAVOLI_CATS.includes(t.cat)) return false;
+            const moodOk = (t.mood === selectedMood) || (f.cats.includes(t.cat) && f.levels.includes(t.level));
+            return moodOk;
+        });
+        if (pool.length < 3) {
+            pool = tasksDatabase.filter(t =>
+                !skipped.includes(t.id) && !TAVOLI_CATS.includes(t.cat) &&
+                (t.mood === selectedMood || f.cats.includes(t.cat))
+            );
+        }
+    } else {
+        pool = tasksDatabase.filter(t =>
+            !skipped.includes(t.id) && !TAVOLI_CATS.includes(t.cat) && t.level === level
+        );
+        if (pool.length === 0) pool = tasksDatabase.filter(t => !TAVOLI_CATS.includes(t.cat));
+    }
+    return pool.length > 0 ? pool : tasksDatabase.filter(t => !TAVOLI_CATS.includes(t.cat));
+}
+
+function pickTask(pool) {
+    const unseen = pool.filter(t => !seenIds.includes(t.id));
+    const final  = unseen.length > 0 ? unseen : pool;
+    return final[Math.floor(Math.random() * final.length)];
+}
+
+function nextTask() {
+    if (activeSeries) { seriesStep++; _showCurrentSeriesTask(); return; }
+    stopTimer();
+    const veto = document.getElementById('veto-btn');
+    if (veto) { veto.style.display='block'; veto.onclick=vetoTask; }
+    const btn = document.getElementById('action-btn');
+    if (btn) { btn.innerText='KÖVETKEZŐ'; btn.onclick=nextTask; btn.style.opacity='1'; }
+    const task = pickTask(getPool());
+    if (!task) return;
+    seenIds.push(task.id);
+    showTask(task);
+    if (selectedMood) {
+        moodStep++;
+        updateMoodProgress();
+    }
+}
+
+function vetoTask() {
+    stopTimer();
+    const pool    = getPool();
+    const current = document.getElementById('task-title').innerText;
+    const other   = pool.filter(t => t.title !== current);
+    const task    = pickTask(other.length > 0 ? other : pool);
+    if (!task) return;
+    seenIds.push(task.id);
+    showTask(task);
+}
+
+function updateMoodProgress() {
+    const prog = document.getElementById('series-progress');
+    if (!prog || !selectedMood) return;
+    prog.style.display = 'flex';
+    prog.innerHTML = '';
+    for (let i = 1; i <= MOOD_TOTAL; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'series-dot' + (i < moodStep ? ' done' : '') + (i === moodStep ? ' active' : '');
+        prog.appendChild(dot);
+    }
+    const btn = document.getElementById('action-btn');
+    if (moodStep >= MOOD_TOTAL) {
+        btn.innerText = 'ÚJ HANGULAT';
+        btn.onclick = () => { moodStep=0; selectedMood=null; prog.style.display='none'; showMoodScreen(); btn.onclick=nextTask; };
+    }
+}
+
+function showTask(task) {
+    const card = document.getElementById('task-card');
+    card.classList.add('transitioning');
+    setTimeout(() => {
+        document.getElementById('category-label').innerText = '— ' + task.cat.toUpperCase() + ' —';
+        document.getElementById('task-title').innerText     = task.title;
+        document.getElementById('task-desc').innerText      = task.desc;
+        const tb = document.getElementById('time-badge');
+        if (task.time && task.time > 0) {
+            const m = Math.floor(task.time/60), s = task.time%60;
+            tb.innerText = s > 0 ? m+'p '+s+'mp' : m+' perc';
+            tb.classList.remove('hidden');
+            tb.onclick = () => startTimer(task.time);
+        } else {
+            tb.classList.add('hidden');
+            tb.onclick = null;
+        }
+        const fr = document.getElementById('feedback-row');
+        if (fr) {
+            fr.style.display = 'flex';
+            document.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('selected'));
+            if (feedbackData[task.id]) {
+                const map = { fire:0, ok:1, skip:2 };
+                const btns = document.querySelectorAll('.feedback-btn');
+                if (btns[map[feedbackData[task.id]]]) btns[map[feedbackData[task.id]]].classList.add('selected');
+            }
+        }
+        card.classList.remove('transitioning');
+        if (navigator.vibrate) navigator.vibrate([30,60,30]);
+    }, 300);
+}
+
+function giveFeedback(type) {
+    const title = document.getElementById('task-title').innerText;
+    const task  = tasksDatabase.find(t => t.title === title);
+    if (!task) return;
+    feedbackData[task.id] = type;
+    document.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('selected'));
+    event.target.classList.add('selected');
+    localStorage.setItem('edge_feedback', JSON.stringify(feedbackData));
+    if (type === 'skip') setTimeout(() => nextTask(), 600);
+}
+
+function loadFeedback() {
+    try {
+        const s = localStorage.getItem('edge_feedback');
+        if (s) feedbackData = JSON.parse(s);
+    } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+//  SOROZATOK
+// ═══════════════════════════════════════════════════════
+function startSeries(name) {
+    const def = seriesDefinitions[name];
+    if (!def) return;
+    activeSeries = name; seriesStep = 0; seriesQueue = [];
+    if (def.ordered) {
+        for (const slot of def.ordered) {
+            const p = tasksDatabase.filter(t => slot.cats.includes(t.cat) && slot.levels.includes(t.level) && !seriesQueue.includes(t.id));
+            if (p.length) seriesQueue.push(p[Math.floor(Math.random()*p.length)].id);
+        }
+    } else if (def.cats === null) {
+        const sh = [...tasksDatabase].sort(()=>Math.random()-0.5);
+        for (let i=0;i<def.count&&i<sh.length;i++) seriesQueue.push(sh[i].id);
+    } else {
+        const p = tasksDatabase.filter(t => def.cats.includes(t.cat) && (!def.levels||def.levels.includes(t.level)));
+        const sh = [...p].sort(()=>Math.random()-0.5);
+        for (let i=0;i<def.count&&i<sh.length;i++) seriesQueue.push(sh[i].id);
+    }
+    showMainApp();
+    _showCurrentSeriesTask();
+}
+
+function startTavoli(name) {
+    const mode = tavoliModes[name];
+    if (!mode) return;
+    activeSeries = 'tavoli_'+name; seriesStep = 0; seriesQueue = [];
+    const pool = tasksDatabase.filter(t => mode.cats.includes(t.cat) && (!mode.levels||mode.levels.includes(t.level)));
+    const sh = [...pool].sort(()=>Math.random()-0.5);
+    for (let i=0;i<mode.count&&i<sh.length;i++) seriesQueue.push(sh[i].id);
+    showMainApp();
+    _showCurrentSeriesTask();
+}
+
+function _showCurrentSeriesTask() {
+    if (seriesStep >= seriesQueue.length) { _endSeries(); return; }
+    const task = tasksDatabase.find(t => t.id === seriesQueue[seriesStep]);
+    if (task) showTask(task);
+    _renderSeriesProgress();
+    const btn  = document.getElementById('action-btn');
+    const veto = document.getElementById('veto-btn');
+    const isLast = seriesStep >= seriesQueue.length - 1;
+    btn.innerText = isLast ? 'BEFEJEZÉS' : 'KÖVETKEZŐ →';
+    btn.onclick   = _nextSeriesTask;
+    btn.style.opacity = '1';
+    if (veto) veto.style.display = 'none';
+}
+
+function _nextSeriesTask() { seriesStep++; _showCurrentSeriesTask(); }
+
+function _renderSeriesProgress() {
+    const prog = document.getElementById('series-progress');
+    if (!prog) return;
+    prog.style.display = 'flex';
+    prog.innerHTML = '';
+    for (let i=0;i<seriesQueue.length;i++) {
+        const d = document.createElement('div');
+        d.className = 'series-dot'+(i<seriesStep?' done':'')+(i===seriesStep?' active':'');
+        prog.appendChild(d);
+    }
+}
+
+function _endSeries() {
+    activeSeries = null; seriesStep = 0; seriesQueue = [];
+    document.getElementById('series-progress').style.display = 'none';
+    document.getElementById('task-title').innerText   = 'Vége 🌙';
+    document.getElementById('task-desc').innerText    = 'A sorozat véget ért. Reméljük jól telt az est!';
+    document.getElementById('category-label').innerText = '— BEFEJEZVE —';
+    document.getElementById('feedback-row').style.display = 'none';
+    const btn  = document.getElementById('action-btn');
+    const veto = document.getElementById('veto-btn');
+    btn.innerText = 'ÚJ HANGULAT';
+    btn.onclick = () => { btn.onclick=nextTask; if(veto)veto.style.display='block'; showSeriesScreen(); };
+    if (veto) veto.style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+//  SLIDER
+// ═══════════════════════════════════════════════════════
+function updateSliderLabel() {
+    const v = parseInt(document.getElementById('mood-slider').value);
+    document.getElementById('level-text').innerText = {1:'LÁGY',2:'KÖZEPES',3:'INTENZÍV'}[v];
+}
+
+// ═══════════════════════════════════════════════════════
+//  TIMER
+// ═══════════════════════════════════════════════════════
+function startTimer(seconds) {
+    stopTimer();
+    timerSeconds = seconds;
+    const total = seconds;
+    const ring  = document.getElementById('ring-progress');
+    const circ  = 2 * Math.PI * 90;
+    ring.style.strokeDasharray  = circ;
+    ring.style.strokeDashoffset = 0;
+    document.getElementById('timer-overlay').classList.remove('hidden');
+    updateTimerDisplay();
+    timerInterval = setInterval(() => {
+        timerSeconds--;
+        if (timerSeconds <= 0) {
+            timerSeconds = 0;
+            updateTimerDisplay();
+            if (navigator.vibrate) navigator.vibrate([200,100,200,100,400]);
+            stopTimer(); return;
+        }
+        updateTimerDisplay();
+        ring.style.strokeDashoffset = circ * (1 - timerSeconds/total);
+    }, 1000);
+}
+function updateTimerDisplay() {
+    const m = Math.floor(timerSeconds/60), s = timerSeconds%60;
+    document.getElementById('timer-display').innerText = m+':'+String(s).padStart(2,'0');
+}
+function stopTimer() {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    document.getElementById('timer-overlay').classList.add('hidden');
+}
+
+// ═══════════════════════════════════════════════════════
+//  PÁROS MÓD (JSONBin)
+// ═══════════════════════════════════════════════════════
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
+const JSONBIN_KEY  = '$2a$10$JO3HYFjszG.TWKlikq3h.O5PG6wMMJp5FZtRuCV5u8cLYuT4Bdfgy';
+
+function getBinId(c) { return localStorage.getItem('edge_bin_'+c); }
+function setBinId(c,id) { localStorage.setItem('edge_bin_'+c,id); }
+
+function getPairCode() {
+    const v = document.getElementById('pair-code-input').value.trim();
+    if (v.length !== 4 || isNaN(v)) { alert('Írj be egy 4 jegyű számot!'); return null; }
+    return v;
+}
+function joinAsIranyito() {
+    const code = getPairCode(); if (!code) return;
+    pairCode = code; myRole = 'iranyito';
+    clearSharedTask(); showMainApp(); updateRoleBadge();
+    if (navigator.vibrate) navigator.vibrate([100,50,100]);
+}
+function joinAsBefogado() {
+    const code = getPairCode(); if (!code) return;
+    pairCode = code; myRole = 'befogado';
+    showMainApp(); updateRoleBadge(); startPolling();
+    if (navigator.vibrate) navigator.vibrate([100,50,100]);
+}
+function updateRoleBadge() {
+    const st = document.getElementById('status-text');
+    if (myRole==='iranyito') st.innerHTML='<span style="color:var(--gold);letter-spacing:2px">IRÁNYÍTÓ</span>';
+    else if (myRole==='befogado') st.innerHTML='<span style="color:#aaa;letter-spacing:2px">BEFOGADÓ</span>';
+    else st.textContent='CONNECTED';
+    if (myRole==='befogado') {
+        document.getElementById('action-btn').textContent='VÁROK...';
+        document.getElementById('action-btn').style.opacity='0.5';
+        document.getElementById('veto-btn').style.display='none';
+    }
+}
+async function writeSharedTask(task) {
+    const data = { taskId:task.id, title:task.title, desc:task.desc, cat:task.cat, level:task.level, time:task.time||0, sentAt:Date.now() };
+    const binId = getBinId(pairCode);
+    try {
+        if (binId) {
+            await fetch(JSONBIN_BASE+'/b/'+binId, { method:'PUT', headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY}, body:JSON.stringify(data) });
+        } else {
+            const res = await fetch(JSONBIN_BASE+'/b', { method:'POST', headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY,'X-Bin-Name':'edge_'+pairCode,'X-Bin-Private':'false'}, body:JSON.stringify(data) });
+            const json = await res.json();
+            if (json.metadata?.id) setBinId(pairCode, json.metadata.id);
+        }
+    } catch(e) { localStorage.setItem('edge_task_'+pairCode, JSON.stringify(data)); }
+}
+async function readSharedTask() {
+    const binId = getBinId(pairCode);
+    try {
+        if (binId) {
+            const res  = await fetch(JSONBIN_BASE+'/b/'+binId+'/latest', { headers:{'X-Master-Key':JSONBIN_KEY} });
+            const json = await res.json();
+            return json.record || null;
+        }
+    } catch(e) {}
+    const local = localStorage.getItem('edge_task_'+pairCode);
+    return local ? JSON.parse(local) : null;
+}
+async function clearSharedTask() {
+    if (!pairCode) return;
+    localStorage.removeItem('edge_task_'+pairCode);
+}
+function startPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(checkForNewTask, 3000);
+}
+async function checkForNewTask() {
+    if (myRole !== 'befogado' || !pairCode) return;
+    const data = await readSharedTask();
+    if (!data || data.taskId === lastTaskId) return;
+    if (Date.now() - data.sentAt > 300000) return;
+    lastTaskId = data.taskId;
+    showIncomingTask(data);
+}
+function showIncomingTask(data) {
+    document.getElementById('task-title').innerText = data.title;
+    document.getElementById('task-desc').innerText  = data.desc;
+    const tb = document.getElementById('time-badge');
+    if (data.time > 0) { tb.innerText=Math.floor(data.time/60)+' perc'; tb.classList.remove('hidden'); }
+    else tb.classList.add('hidden');
+    showMainApp();
+    if (navigator.vibrate) navigator.vibrate([200,100,200]);
+}
+</script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        // Töröljük az összes régi SW-t
+        regs.forEach(r => r.unregister());
+      }).then(() => {
+        // Csak manifest miatt regisztráljuk - cache NÉLKÜL
+        navigator.serviceWorker.register('./sw.js');
+      });
+    }
+  </script>
+</body>
+</html>
