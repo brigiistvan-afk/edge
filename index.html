@@ -10,1842 +10,339 @@
     <meta name="apple-mobile-web-app-title" content="Planner">
     <link rel="apple-touch-icon" href="icon-192.png">
     <style>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@200;300;400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Jost:wght@300;400&display=swap');
 
 :root {
     --gold: #d4af37;
-    --gold-mid: rgba(212, 175, 55, 0.4);
+    --gold-dim: rgba(212,175,55,0.15);
     --black: #0a0a0a;
     --gray2: #1e1e1e;
     --text: #ddd8cc;
     --text-dim: #666;
     --red: #8b0000;
 }
-
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-body {
-    margin: 0;
-    background: var(--black);
-    color: var(--text);
-    font-family: 'Jost', sans-serif;
-    font-weight: 300;
-    overflow: hidden;
-    height: 100vh;
-    user-select: none;
-}
-
-.hidden { display: none !important; }
+body { margin:0; background:var(--black); color:var(--text); font-family:'Jost',sans-serif; font-weight:300; overflow:hidden; height:100vh; user-select:none; }
+.hidden { display:none !important; }
 
 /* ── SZÁMOLÓGÉP ── */
-#ghost-app {
-    padding: 30px 25px;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.calc-display {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 4rem;
-    font-weight: 300;
-    text-align: right;
-    padding: 28px 30px;
-    background: #000;
-    color: #fff;
-    margin-bottom: 16px;
-    border-radius: 12px;
-    letter-spacing: 4px;
-    border: 1px solid #1a1a1a;
-    min-height: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-}
-
-.calc-buttons {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-}
-
-.calc-buttons button {
-    padding: 28px;
-    font-size: 1.9rem;
-    font-family: 'Cormorant Garamond', serif;
-    background: var(--gray2);
-    border: 1px solid #222;
-    color: #ccc;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background 0.15s;
-}
-
-.calc-buttons button:active { background: #2a2a2a; color: #fff; }
-.calc-buttons button.special { color: var(--gold); border-color: #2a2200; }
-
-/* ── FŐ APP ── */
-#main-app {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    background: var(--black);
-    position: relative;
-    overflow: hidden;
-}
-
-#main-app::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(212,175,55,0.04) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-}
-
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 22px 25px 16px;
-    position: relative;
-    z-index: 1;
-    border-bottom: 1px solid #141414;
-}
-
-#status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #888;
-    font-size: 0.75rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-}
-
-.status-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--gold);
-    animation: pulse 2.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.3; transform: scale(0.7); }
-}
-
-.safe-word {
-    background: rgba(139,0,0,0.1);
-    border: 1px solid #5a2020;
-    color: #c04040;
-    padding: 7px 16px;
-    border-radius: 20px;
-    font-family: 'Jost', sans-serif;
-    font-size: 0.65rem;
-    letter-spacing: 3px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.safe-word:active { background: #2a1010; color: #c0392b; }
-
-/* ── KÁRTYA ── */
-#card-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 20px 25px;
-    position: relative;
-    z-index: 1;
-}
-
-.category-badge {
-    font-size: 0.75rem;
-    letter-spacing: 4px;
-    color: var(--gold);
-    text-transform: uppercase;
-    margin-bottom: 14px;
-    opacity: 0.85;
-    text-align: center;
-}
-
-#task-card {
-    border: 1px solid rgba(212,175,55,0.25);
-    padding: 32px 24px;
-    border-radius: 16px;
-    text-align: center;
-    background: linear-gradient(145deg, #0f0f0f, #070707);
-    position: relative;
-    overflow: hidden;
-    transition: opacity 0.3s, transform 0.3s;
-}
-
-#task-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.35), transparent);
-}
-
-#task-card.transitioning { opacity: 0; transform: translateY(10px); }
-
-#task-title {
-    font-family: 'Cormorant Garamond', serif;
-    color: var(--gold);
-    font-size: 1.9rem;
-    font-weight: 400;
-    letter-spacing: 2px;
-    margin: 0 0 14px;
-    line-height: 1.3;
-}
-
-#task-desc {
-    font-size: 1rem;
-    line-height: 1.9;
-    color: #ccc8c0;
-    margin: 0;
-}
-
-.time-badge {
-    display: inline-block;
-    margin-top: 16px;
-    padding: 6px 16px;
-    border: 1px solid #252520;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    letter-spacing: 2px;
-    color: #999;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s;
-}
-
-.time-badge:active { border-color: var(--gold); color: var(--gold); }
-
-/* ── KONTROLLOK ── */
-.controls {
-    padding: 14px 25px 28px;
-    position: relative;
-    z-index: 1;
-    border-top: 1px solid #111;
-}
-
-.slider-label-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.slider-label { font-size: 0.75rem; letter-spacing: 2px; color: #888; text-transform: uppercase; }
-#level-text   { color: var(--gold); font-size: 0.8rem; font-weight: 400; }
-
-#mood-slider {
-    width: 100%;
-    height: 4px;
-    -webkit-appearance: none;
-    appearance: none;
-    background: linear-gradient(90deg, var(--gold) 0%, var(--gold-mid) 50%, #2a2a2a 100%);
-    border-radius: 1px;
-    outline: none;
-    margin-bottom: 18px;
-    display: block;
-}
-
-#mood-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    background: var(--black);
-    border: 2px solid var(--gold);
-    cursor: pointer;
-    box-shadow: 0 0 10px rgba(212,175,55,0.3);
-}
-
-#action-btn {
-    background: linear-gradient(135deg, #c9a227, #d4af37, #c9a227);
-    border: none;
-    color: #000;
-    padding: 17px;
-    border-radius: 12px;
-    width: 100%;
-    font-family: 'Jost', sans-serif;
-    font-weight: 400;
-    font-size: 0.95rem;
-    letter-spacing: 4px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: all 0.15s;
-    text-transform: uppercase;
-}
-
-#action-btn:active { transform: scale(0.97); filter: brightness(0.88); }
-
-#veto-btn {
-    background: transparent;
-    border: 1px solid #303030;
-    color: #888;
-    padding: 14px;
-    border-radius: 12px;
-    width: 100%;
-    font-family: 'Jost', sans-serif;
-    font-size: 0.8rem;
-    letter-spacing: 3px;
-    cursor: pointer;
-    transition: all 0.15s;
-    text-transform: uppercase;
-}
-
-#veto-btn:active { background: #181818; color: #888; }
-
-/* ── TIMER ── */
-#timer-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(5,5,5,0.95);
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(6px);
-}
-
-.timer-ring { position: relative; margin-bottom: 20px; }
-.timer-ring svg { transform: rotate(-90deg); }
-.timer-ring-bg  { stroke: #1a1a1a; stroke-width: 1; fill: none; }
-
-.timer-ring-circle {
-    stroke: var(--gold);
-    stroke-width: 1.5;
-    fill: none;
-    stroke-dasharray: 565;
-    stroke-dashoffset: 0;
-    transition: stroke-dashoffset 1s linear;
-    stroke-linecap: round;
-}
-
-.timer-center {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-}
-
-.timer-display {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 3.5rem;
-    font-weight: 300;
-    color: var(--gold);
-    letter-spacing: 3px;
-    line-height: 1;
-}
-
-.timer-label {
-    font-size: 0.55rem;
-    letter-spacing: 5px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    margin-top: 8px;
-}
-
-#timer-stop-btn {
-    margin-top: 30px;
-    background: none;
-    border: 1px solid #282828;
-    color: #555;
-    padding: 12px 32px;
-    border-radius: 25px;
-    font-family: 'Jost', sans-serif;
-    font-size: 0.65rem;
-    letter-spacing: 4px;
-    cursor: pointer;
-    text-transform: uppercase;
-}
-
-#timer-stop-btn:active { background: #1a1a1a; color: #999; }
-
-/* ── ANIMÁCIÓK ── */
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(18px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-.intro-anim   { animation: fadeInUp 0.5s ease forwards; }
-.intro-anim-2 { animation: fadeInUp 0.5s 0.12s ease both; }
-.intro-anim-3 { animation: fadeInUp 0.5s 0.24s ease both; }
-
-
-/* ── PÁROS MÓD ── */
-#pair-screen {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 30px 25px;
-    background: var(--black);
-    gap: 20px;
-}
-
-.pair-title {
-    font-family: 'Cormorant Garamond', serif;
-    color: var(--gold);
-    font-size: 1.8rem;
-    font-weight: 300;
-    letter-spacing: 3px;
-    text-align: center;
-    margin-bottom: 10px;
-}
-
-.pair-subtitle {
-    font-size: 0.7rem;
-    letter-spacing: 3px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.pair-code-input {
-    background: #0f0f0f;
-    border: 1px solid rgba(212,175,55,0.3);
-    color: var(--gold);
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 2.5rem;
-    letter-spacing: 8px;
-    text-align: center;
-    padding: 18px 20px;
-    border-radius: 12px;
-    width: 100%;
-    outline: none;
-    -webkit-appearance: none;
-}
-
-.pair-code-input::placeholder {
-    color: #333;
-    letter-spacing: 8px;
-}
-
-.mode-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
-}
-
-.mode-btn {
-    padding: 16px;
-    border-radius: 12px;
-    font-family: 'Jost', sans-serif;
-    font-size: 0.75rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.15s;
-    width: 100%;
-}
-
-.mode-btn.gold {
-    background: linear-gradient(135deg, #c9a227, #d4af37, #c9a227);
-    border: none;
-    color: #000;
-    font-weight: 400;
-}
-
-.mode-btn.outline {
-    background: transparent;
-    border: 1px solid rgba(212,175,55,0.3);
-    color: var(--gold);
-}
-
-.mode-btn.dim {
-    background: transparent;
-    border: 1px solid #222;
-    color: #555;
-}
-
-.mode-btn:active { transform: scale(0.97); filter: brightness(0.88); }
-
-.role-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 14px;
-    border-radius: 20px;
-    font-size: 0.6rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-}
-
-.role-badge.iranyito {
-    border: 1px solid rgba(212,175,55,0.4);
-    color: var(--gold);
-    background: rgba(212,175,55,0.06);
-}
-
-.role-badge.befogado {
-    border: 1px solid rgba(180,180,180,0.3);
-    color: #aaa;
-    background: rgba(255,255,255,0.04);
-}
-
-/* Beérkező feladat overlay */
-#incoming-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(5,5,5,0.97);
-    z-index: 200;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 30px;
-    backdrop-filter: blur(8px);
-}
-
-.incoming-label {
-    font-size: 0.6rem;
-    letter-spacing: 5px;
-    color: var(--gold);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    opacity: 0.7;
-}
-
-.incoming-from {
-    font-size: 0.65rem;
-    letter-spacing: 3px;
-    color: var(--text-dim);
-    margin-bottom: 30px;
-}
-
-.incoming-card {
-    border: 1px solid rgba(212,175,55,0.3);
-    border-radius: 16px;
-    padding: 28px 22px;
-    text-align: center;
-    background: #0d0d0d;
-    width: 100%;
-    position: relative;
-}
-
-.incoming-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.5), transparent);
-}
-
-.incoming-title {
-    font-family: 'Cormorant Garamond', serif;
-    color: var(--gold);
-    font-size: 1.5rem;
-    font-weight: 400;
-    letter-spacing: 2px;
-    margin: 0 0 14px;
-}
-
-.incoming-desc {
-    font-size: 0.85rem;
-    line-height: 1.8;
-    color: #b8b4ac;
-    margin: 0;
-}
-
-.incoming-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
-    margin-top: 30px;
-}
-
-@keyframes slideInUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-.slide-in { animation: slideInUp 0.4s ease forwards; }
-
-/* Szinkron jelző */
-#sync-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: #444;
-    transition: background 0.3s;
-}
-#sync-dot.synced { background: var(--gold); }
-#sync-dot.pulse  { animation: pulse 1s ease-in-out 3; }
-
+#ghost-app { padding:30px 25px; height:100vh; display:flex; flex-direction:column; justify-content:center; }
+.calc-display { font-family:'Cormorant Garamond',serif; font-size:4rem; font-weight:300; text-align:right; padding:25px 30px; background:#000; color:#fff; margin-bottom:16px; border-radius:12px; letter-spacing:4px; border:1px solid #1a1a1a; min-height:100px; display:flex; align-items:center; justify-content:flex-end; }
+.calc-buttons { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.calc-buttons button { padding:28px; font-size:1.9rem; font-family:'Cormorant Garamond',serif; background:var(--gray2); border:1px solid #222; color:#ccc; border-radius:12px; cursor:pointer; transition:background 0.15s; }
+.calc-buttons button:active { background:#2a2a2a; color:#fff; }
+.calc-buttons button.special { color:var(--gold); border-color:#2a2200; }
+
+/* ── LICENC ── */
+#license-screen { height:100vh; display:flex; flex-direction:column; justify-content:center; padding:30px 25px; gap:20px; background:var(--black); }
+.lic-title { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:2.2rem; font-weight:300; letter-spacing:3px; text-align:center; }
+.lic-sub { font-size:0.75rem; letter-spacing:2px; color:#555; text-transform:uppercase; text-align:center; }
+#license-input { background:#0f0f0f; border:1px solid rgba(212,175,55,0.3); color:var(--gold); font-family:'Cormorant Garamond',serif; font-size:2.2rem; letter-spacing:6px; text-align:center; padding:18px; border-radius:12px; width:100%; outline:none; text-transform:uppercase; }
+#license-input.error { border-color:#8b0000; color:#c04040; }
+.lic-btn { background:linear-gradient(135deg,#c9a227,#d4af37); border:none; color:#000; padding:17px; border-radius:12px; width:100%; font-family:'Jost',sans-serif; font-size:0.85rem; letter-spacing:4px; text-transform:uppercase; cursor:pointer; }
+.lic-note { text-align:center; font-size:0.65rem; color:#333; letter-spacing:2px; }
 
 /* ── HANGULAT KÉPERNYŐ ── */
-#mood-screen {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 30px 25px;
-    background: var(--black);
-    gap: 16px;
-}
-
-.mood-title {
-    font-family: 'Cormorant Garamond', serif;
-    color: var(--gold);
-    font-size: 2rem;
-    font-weight: 300;
-    letter-spacing: 3px;
-    text-align: center;
-    margin-bottom: 4px;
-}
-
-.mood-subtitle {
-    font-size: 0.75rem;
-    letter-spacing: 2px;
-    color: #666;
-    text-transform: uppercase;
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.mood-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 10px;
-}
-
-.mood-option {
-    background: #0f0f0f;
-    border: 1px solid #252520;
-    border-radius: 14px;
-    padding: 20px 14px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.mood-option:active, .mood-option.selected {
-    border-color: var(--gold);
-    background: rgba(212,175,55,0.08);
-}
-
-.mood-option .mood-emoji {
-    font-size: 2rem;
-    display: block;
-    margin-bottom: 8px;
-}
-
-.mood-option .mood-label {
-    font-size: 0.8rem;
-    letter-spacing: 2px;
-    color: #aaa;
-    text-transform: uppercase;
-    display: block;
-}
-
-.mood-option.selected .mood-label { color: var(--gold); }
-
-.mood-start-btn {
-    background: linear-gradient(135deg, #c9a227, #d4af37);
-    border: none;
-    color: #000;
-    padding: 18px;
-    border-radius: 12px;
-    width: 100%;
-    font-family: 'Jost', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 400;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    cursor: pointer;
-    margin-top: 10px;
-    opacity: 1;
-    transition: opacity 0.2s;
-}
-
-.mood-start-btn.ready { opacity: 1; }
-
-/* ── SOROZAT KÉPERNYŐ ── */
-#series-screen {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    background: var(--black);
-    overflow-y: auto;
-}
-
-.series-header {
-    padding: 22px 25px 16px;
-    border-bottom: 1px solid #141414;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.series-title-big {
-    font-family: 'Cormorant Garamond', serif;
-    color: var(--gold);
-    font-size: 1.6rem;
-    font-weight: 300;
-    letter-spacing: 2px;
-}
-
-.series-list {
-    padding: 20px 25px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.series-card {
-    background: #0f0f0f;
-    border: 1px solid #222;
-    border-radius: 14px;
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-}
-
-.series-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.2), transparent);
-}
-
-.series-card:active { border-color: var(--gold); background: rgba(212,175,55,0.05); }
-
-.series-card-name {
-    font-family: 'Cormorant Garamond', serif;
-    color: var(--gold);
-    font-size: 1.3rem;
-    font-weight: 400;
-    margin-bottom: 6px;
-}
-
-.series-card-desc {
-    font-size: 0.8rem;
-    color: #777;
-    line-height: 1.6;
-    margin-bottom: 10px;
-}
-
-.series-card-meta {
-    font-size: 0.65rem;
-    letter-spacing: 2px;
-    color: #555;
-    text-transform: uppercase;
-}
-
-/* Sorozat aktív jelző */
-#series-progress {
-    display: flex;
-    gap: 6px;
-    justify-content: center;
-    padding: 10px 0 0;
-}
-
-.series-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #222;
-    transition: background 0.3s;
-}
-
-.series-dot.done   { background: var(--gold); }
-.series-dot.active { background: var(--gold); box-shadow: 0 0 8px rgba(212,175,55,0.5); }
-
-/* ── VISSZAJELZÉS GOMBOK ── */
-.feedback-row {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 14px;
-}
-
-.feedback-btn {
-    flex: 1;
-    padding: 12px 8px;
-    border-radius: 10px;
-    border: 1px solid #222;
-    background: transparent;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all 0.15s;
-}
-
-.feedback-btn:active { transform: scale(0.93); }
-.feedback-btn.fire   { border-color: rgba(212,175,55,0.3); }
-.feedback-btn.ok     { border-color: #2a2a2a; }
-.feedback-btn.skip   { border-color: #2a1010; }
-.feedback-btn.selected { background: rgba(212,175,55,0.1); border-color: var(--gold); }
-
+#mood-screen { height:100vh; display:flex; flex-direction:column; justify-content:center; padding:28px 25px; gap:14px; background:var(--black); }
+.mood-title { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:2rem; font-weight:300; letter-spacing:3px; text-align:center; }
+.mood-sub { font-size:0.7rem; letter-spacing:2px; color:#555; text-transform:uppercase; text-align:center; }
+.mood-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.mood-opt { background:#0f0f0f; border:1px solid #252520; border-radius:14px; padding:18px 12px; text-align:center; cursor:pointer; transition:all 0.2s; }
+.mood-opt:active, .mood-opt.selected { border-color:var(--gold); background:rgba(212,175,55,0.08); }
+.mood-opt .emoji { font-size:2rem; display:block; margin-bottom:6px; }
+.mood-opt .mlabel { font-size:0.8rem; letter-spacing:2px; color:#aaa; text-transform:uppercase; display:block; }
+.mood-opt.selected .mlabel { color:var(--gold); }
+.mood-opt:last-child { grid-column: 1 / -1; }
+.mood-start { background:linear-gradient(135deg,#c9a227,#d4af37); border:none; color:#000; padding:17px; border-radius:12px; width:100%; font-family:'Jost',sans-serif; font-size:0.85rem; letter-spacing:4px; text-transform:uppercase; cursor:pointer; margin-top:4px; }
+.mood-skip { background:transparent; border:1px solid #222; color:#555; padding:13px; border-radius:12px; width:100%; font-family:'Jost',sans-serif; font-size:0.7rem; letter-spacing:3px; text-transform:uppercase; cursor:pointer; }
+.tavoli-big-btn { background:transparent; border:1px solid rgba(212,175,55,0.25); color:var(--gold); padding:16px; border-radius:12px; width:100%; font-family:'Jost',sans-serif; font-size:0.8rem; letter-spacing:3px; text-transform:uppercase; cursor:pointer; }
 
 /* ── TÁVOLI KÉPERNYŐ ── */
-#tavoli-screen {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    background: var(--black);
-    overflow-y: auto;
-}
+#tavoli-screen { height:100vh; display:flex; flex-direction:column; background:var(--black); overflow-y:auto; }
+.tav-header { padding:22px 25px 14px; border-bottom:1px solid #141414; display:flex; justify-content:space-between; align-items:center; }
+.tav-title { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1.8rem; font-weight:300; letter-spacing:3px; }
+.tav-list { padding:16px 25px 30px; display:flex; flex-direction:column; gap:12px; }
+.tav-card { background:#0d0d0d; border:1px solid #1e1e1e; border-radius:14px; padding:18px 20px; cursor:pointer; transition:all 0.2s; }
+.tav-card:active { border-color:var(--gold); background:rgba(212,175,55,0.05); }
+.tav-card-icon { font-size:1.4rem; margin-bottom:6px; display:block; }
+.tav-card-name { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1.2rem; margin-bottom:4px; }
+.tav-card-desc { font-size:0.78rem; color:#666; line-height:1.5; }
 
-.tavoli-header {
-    padding: 24px 25px 16px;
-    border-bottom: 1px solid #141414;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+/* ── HANGULAT SOROZAT KÉPERNYŐ ── */
+#series-screen { height:100vh; display:flex; flex-direction:column; background:var(--black); overflow-y:auto; }
+.ser-header { padding:22px 25px 14px; border-bottom:1px solid #141414; display:flex; justify-content:space-between; align-items:center; }
+.ser-title { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1.6rem; font-weight:300; letter-spacing:2px; }
+.ser-list { padding:16px 25px 30px; display:flex; flex-direction:column; gap:12px; }
+.ser-card { background:#0f0f0f; border:1px solid #222; border-radius:14px; padding:20px; cursor:pointer; transition:all 0.2s; }
+.ser-card:active { border-color:var(--gold); background:rgba(212,175,55,0.05); }
+.ser-card-name { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1.3rem; margin-bottom:6px; }
+.ser-card-desc { font-size:0.8rem; color:#777; line-height:1.6; margin-bottom:8px; }
+.ser-card-meta { font-size:0.65rem; letter-spacing:2px; color:#444; text-transform:uppercase; }
 
-.tavoli-title {
-    font-family: 'Cormorant Garamond', serif;
-    color: var(--gold);
-    font-size: 1.8rem;
-    font-weight: 300;
-    letter-spacing: 3px;
-}
+/* ── FŐ APP ── */
+#main-app { height:100vh; display:flex; flex-direction:column; background:var(--black); position:relative; overflow:hidden; }
+#main-app::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(212,175,55,0.04) 0%,transparent 70%); pointer-events:none; z-index:0; }
 
-.tavoli-subtitle {
-    font-size: 0.7rem;
-    letter-spacing: 2px;
-    color: #555;
-    text-transform: uppercase;
-    padding: 0 25px 16px;
-    margin-top: 10px;
-}
+header { display:flex; justify-content:space-between; align-items:center; padding:18px 20px 14px; position:relative; z-index:1; border-bottom:1px solid #141414; }
+#status { display:flex; align-items:center; gap:8px; color:var(--text-dim); font-size:0.7rem; letter-spacing:3px; text-transform:uppercase; }
+.status-dot { width:6px; height:6px; border-radius:50%; background:var(--gold); animation:pulse 2.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;}50%{opacity:0.3;} }
+.safe-word { background:rgba(139,0,0,0.1); border:1px solid #5a2020; color:#c04040; padding:7px 14px; border-radius:20px; font-family:'Jost',sans-serif; font-size:0.65rem; letter-spacing:3px; cursor:pointer; }
 
-.tavoli-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 0 25px 30px;
-}
+/* AKTÍV HANGULAT BAR */
+#active-mood-bar { display:none; align-items:center; justify-content:space-between; padding:8px 14px; margin:8px 20px 0; background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.18); border-radius:10px; position:relative; z-index:1; }
+.active-mood-label { font-size:0.85rem; letter-spacing:2px; color:var(--gold); }
+.change-mood-btn { background:none; border:none; color:#555; font-size:0.65rem; letter-spacing:2px; text-transform:uppercase; cursor:pointer; font-family:'Jost',sans-serif; padding:4px 8px; }
+.change-mood-btn:active { color:var(--gold); }
 
-.tavoli-card {
-    background: #0d0d0d;
-    border: 1px solid #1e1e1e;
-    border-radius: 14px;
-    padding: 18px 20px;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-}
+#card-area { flex:1; display:flex; flex-direction:column; justify-content:center; padding:16px 20px; position:relative; z-index:1; }
+.category-badge { font-size:0.75rem; letter-spacing:4px; color:var(--gold); text-transform:uppercase; margin-bottom:14px; opacity:0.7; text-align:center; }
+#task-card { border:1px solid rgba(212,175,55,0.22); padding:28px 22px; border-radius:16px; text-align:center; background:linear-gradient(145deg,#0f0f0f,#070707); position:relative; overflow:hidden; transition:opacity 0.3s,transform 0.3s; }
+#task-card::before { content:''; position:absolute; top:0;left:0;right:0;height:1px; background:linear-gradient(90deg,transparent,rgba(212,175,55,0.4),transparent); }
+#task-card.transitioning { opacity:0; transform:translateY(10px); }
+#task-title { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1.7rem; font-weight:400; letter-spacing:2px; margin:0 0 14px; line-height:1.3; }
+#task-desc { font-size:0.9rem; line-height:1.8; color:#ccc8c0; margin:0; }
+.time-badge { display:inline-block; margin-top:14px; padding:6px 14px; border:1px solid #252520; border-radius:20px; font-size:0.75rem; letter-spacing:2px; color:#888; cursor:pointer; }
+.time-badge:active { border-color:var(--gold); color:var(--gold); }
+.feedback-row { display:none; gap:10px; justify-content:center; margin-top:14px; }
+.feedback-btn { flex:1; padding:11px 8px; border-radius:10px; border:1px solid #222; background:transparent; font-size:1.1rem; cursor:pointer; transition:all 0.15s; }
+.feedback-btn.selected { background:rgba(212,175,55,0.1); border-color:var(--gold); }
 
-.tavoli-card:active { border-color: var(--gold); background: rgba(212,175,55,0.05); }
+/* SOROZAT PROGRESS */
+#series-progress { display:none; gap:6px; justify-content:center; padding:10px 0 0; position:relative; z-index:1; }
+.series-dot { width:8px; height:8px; border-radius:50%; background:#222; transition:background 0.3s; }
+.series-dot.done { background:var(--gold); }
+.series-dot.active { background:var(--gold); box-shadow:0 0 8px rgba(212,175,55,0.5); }
 
-.tavoli-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.15), transparent);
-}
+.controls { padding:12px 20px 26px; position:relative; z-index:1; border-top:1px solid #111; }
+.slider-label-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.slider-label { font-size:0.72rem; letter-spacing:2px; color:#888; text-transform:uppercase; }
+#level-text { color:var(--gold); font-weight:400; }
+#mood-slider { width:100%; height:4px; -webkit-appearance:none; appearance:none; background:linear-gradient(90deg,var(--gold) 0%,rgba(212,175,55,0.4) 50%,#2a2a2a 100%); border-radius:2px; outline:none; margin-bottom:16px; display:block; }
+#mood-slider::-webkit-slider-thumb { -webkit-appearance:none; width:24px; height:24px; border-radius:50%; background:var(--black); border:2px solid var(--gold); cursor:pointer; box-shadow:0 0 10px rgba(212,175,55,0.3); }
+#action-btn { background:linear-gradient(135deg,#c9a227,#d4af37,#c9a227); border:none; color:#000; padding:17px; border-radius:12px; width:100%; font-family:'Jost',sans-serif; font-weight:400; font-size:0.9rem; letter-spacing:4px; margin-bottom:10px; cursor:pointer; transition:all 0.15s; text-transform:uppercase; }
+#action-btn:active { transform:scale(0.97); filter:brightness(0.88); }
+#veto-btn { background:transparent; border:1px solid #282828; color:#777; padding:13px; border-radius:12px; width:100%; font-family:'Jost',sans-serif; font-size:0.75rem; letter-spacing:3px; cursor:pointer; text-transform:uppercase; }
+#veto-btn:active { background:#181818; color:#aaa; }
 
-.tavoli-card-icon  { font-size: 1.4rem; margin-bottom: 6px; display: block; }
-.tavoli-card-name  { font-family: 'Cormorant Garamond', serif; color: var(--gold); font-size: 1.2rem; margin-bottom: 4px; }
-.tavoli-card-desc  { font-size: 0.78rem; color: #666; line-height: 1.5; }
+/* ── PÁROS MÓD ── */
+#pair-screen { height:100vh; display:flex; flex-direction:column; justify-content:center; padding:30px 25px; gap:16px; background:var(--black); }
+.pair-title { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1.8rem; font-weight:300; letter-spacing:3px; text-align:center; }
+.pair-sub { font-size:0.7rem; letter-spacing:2px; color:#555; text-transform:uppercase; text-align:center; }
+.pair-input { background:#0f0f0f; border:1px solid rgba(212,175,55,0.3); color:var(--gold); font-family:'Cormorant Garamond',serif; font-size:2.5rem; letter-spacing:8px; text-align:center; padding:18px; border-radius:12px; width:100%; outline:none; }
+.pair-input::placeholder { color:#333; }
+.mode-btn { padding:16px; border-radius:12px; font-family:'Jost',sans-serif; font-size:0.75rem; letter-spacing:3px; text-transform:uppercase; cursor:pointer; transition:all 0.15s; width:100%; }
+.mode-btn.gold { background:linear-gradient(135deg,#c9a227,#d4af37); border:none; color:#000; font-weight:400; }
+.mode-btn.outline { background:transparent; border:1px solid rgba(212,175,55,0.3); color:var(--gold); }
+.mode-btn.dim { background:transparent; border:1px solid #222; color:#555; }
+.mode-btn:active { transform:scale(0.97); filter:brightness(0.88); }
 
-/* Hangulat képernyő frissítés - 5 opció */
-.mood-grid-5 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 10px;
-}
+/* ── TIMER ── */
+#timer-overlay { position:fixed; inset:0; background:rgba(5,5,5,0.96); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(6px); }
+.timer-ring { position:relative; margin-bottom:20px; }
+.timer-ring svg { transform:rotate(-90deg); }
+.timer-ring-bg { stroke:#1a1a1a; stroke-width:1; fill:none; }
+.timer-ring-circle { stroke:var(--gold); stroke-width:1.5; fill:none; stroke-dasharray:565; stroke-dashoffset:0; transition:stroke-dashoffset 1s linear; stroke-linecap:round; }
+.timer-center { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+.timer-display { font-family:'Cormorant Garamond',serif; font-size:3.5rem; font-weight:300; color:var(--gold); letter-spacing:3px; line-height:1; }
+.timer-label { font-size:0.55rem; letter-spacing:5px; color:var(--text-dim); text-transform:uppercase; margin-top:8px; }
+#timer-stop-btn { margin-top:30px; background:none; border:1px solid #282828; color:#555; padding:12px 32px; border-radius:25px; font-family:'Jost',sans-serif; font-size:0.65rem; letter-spacing:4px; cursor:pointer; text-transform:uppercase; }
 
-.mood-grid-5 .mood-option:last-child {
-    grid-column: 1 / -1;
-}
-
-/* TÁVOLI gomb a calc képernyőn */
-.tavoli-entry-btn {
-    background: transparent;
-    border: 1px solid rgba(212,175,55,0.2);
-    color: var(--gold);
-    padding: 16px;
-    border-radius: 12px;
-    width: 100%;
-    font-family: 'Jost', sans-serif;
-    font-size: 0.8rem;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    cursor: pointer;
-    margin-top: 16px;
-    transition: all 0.2s;
-}
-
-.tavoli-entry-btn:active { background: rgba(212,175,55,0.08); }
-
+@keyframes fadeInUp { from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);} }
+.intro-anim   { animation:fadeInUp 0.5s ease forwards; }
+.intro-anim-2 { animation:fadeInUp 0.5s 0.12s ease both; }
+.intro-anim-3 { animation:fadeInUp 0.5s 0.24s ease both; }
     </style>
 </head>
 <body>
-    <div id="ghost-app">
-        <div class="calc-display" id="calc-display">0</div>
-        <div class="calc-buttons">
-            <button onclick="calc(7)">7</button>
-            <button onclick="calc(8)">8</button>
-            <button onclick="calc(9)">9</button>
-            <button onclick="calc(4)">4</button>
-            <button onclick="calc(5)">5</button>
-            <button onclick="calc(6)">6</button>
-            <button onclick="calc(1)">1</button>
-            <button onclick="calc(2)">2</button>
-            <button onclick="calc(3)">3</button>
-            <button class="special" onclick="unlock()">*</button>
-            <button onclick="calc(0)">0</button>
-            <button class="special" onclick="resetCalc()">C</button>
-        </div>
+
+<!-- ░░ SZÁMOLÓGÉP ░░ -->
+<div id="ghost-app">
+    <div class="calc-display" id="calc-display">0</div>
+    <div class="calc-buttons">
+        <button onclick="calc(7)">7</button><button onclick="calc(8)">8</button><button onclick="calc(9)">9</button>
+        <button onclick="calc(4)">4</button><button onclick="calc(5)">5</button><button onclick="calc(6)">6</button>
+        <button onclick="calc(1)">1</button><button onclick="calc(2)">2</button><button onclick="calc(3)">3</button>
+        <button class="special" onclick="unlock()">*</button>
+        <button onclick="calc(0)">0</button>
+        <button class="special" onclick="resetCalc()">C</button>
     </div>
-    <div id="main-app" class="hidden">
-        <header>
-            <div id="status">
-                <div class="status-dot"></div>
-                <span id="status-text">CONNECTED</span>
-            </div>
-            <div id="sync-dot" title="Szinkron"></div>
-            <div style="display:flex;gap:8px;align-items:center"><button class="mode-btn dim" style="padding:6px 12px;font-size:0.55rem;width:auto;border-radius:20px" onclick="showSeriesScreen()">HANGULAT</button><button class="mode-btn dim" style="padding:6px 12px;font-size:0.55rem;width:auto;border-radius:20px" onclick="showPairScreen()">PÁROS</button><button class="safe-word" onclick="safeWord()">&#9632; STOP</button></div>
-        </header>
-        <div id="card-area">
-            <div class="category-badge intro-anim" id="category-label">— EDGE —</div>
-            <div id="task-card" class="intro-anim-2">
-                <h2 id="task-title">Készen állsz?</h2>
-                <p id="task-desc">Állítsd be az intenzitást, majd nyomj a gombra az első feladathoz.</p>
-                <div class="time-badge hidden" id="time-badge"></div>
+</div>
 
-                <div class="feedback-row" id="feedback-row" style="display:none">
-                    <button class="feedback-btn fire" onclick="giveFeedback('fire')" title="Tetszett">🔥</button>
-                    <button class="feedback-btn ok"   onclick="giveFeedback('ok')"   title="Ok volt">👍</button>
-                    <button class="feedback-btn skip" onclick="giveFeedback('skip')" title="Nem nekünk">❌</button>
-                </div>
-            </div>
-        </div>
+<!-- ░░ LICENC ░░ -->
+<div id="license-screen" class="hidden">
+    <div class="lic-title">Aktiválás</div>
+    <div class="lic-sub">Add meg az aktivációs kódot</div>
+    <input id="license-input" type="text" maxlength="9" placeholder="XXXX-0000"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter')activateLicense()">
+    <button class="lic-btn" onclick="activateLicense()">AKTIVÁLÁS</button>
+    <div class="lic-note">Kód szükséges a használathoz</div>
+</div>
 
-        <div id="series-progress" style="display:none"></div>
-        <div class="controls intro-anim-3">
-            <div class="slider-label-row">
-                <span class="slider-label">LÁGY</span>
-                <span class="slider-label" id="level-text">KÖZEPES</span>
-                <span class="slider-label">INTENZÍV</span>
-            </div>
-            <input type="range" min="1" max="3" value="2" id="mood-slider" oninput="updateSliderLabel()">
-            <button id="action-btn" onclick="nextTask()">KEZDJÜK</button>
-            <button id="veto-btn" onclick="vetoTask()">ÚJAT KÉREK</button>
-        </div>
+<!-- ░░ HANGULAT ░░ -->
+<div id="mood-screen" class="hidden">
+    <div class="mood-title">Ma este...</div>
+    <div class="mood-sub">Milyen hangulatban vagytok?</div>
+    <div class="mood-grid">
+        <div class="mood-opt" onclick="selectMood('jatekos')" id="mood-jatekos"><span class="emoji">😈</span><span class="mlabel">Játékos</span></div>
+        <div class="mood-opt" onclick="selectMood('intim')"   id="mood-intim">  <span class="emoji">🌹</span><span class="mlabel">Intim</span></div>
+        <div class="mood-opt" onclick="selectMood('vad')"     id="mood-vad">    <span class="emoji">⚡</span><span class="mlabel">Vad</span></div>
+        <div class="mood-opt" onclick="selectMood('mely')"    id="mood-mely">   <span class="emoji">🌊</span><span class="mlabel">Mély</span></div>
+        <div class="mood-opt" onclick="selectMood('lassu')"   id="mood-lassu">  <span class="emoji">✨</span><span class="mlabel">Lassú</span></div>
     </div>
+    <button class="tavoli-big-btn" onclick="showTavoliScreen()">📱 Most távol vagyunk egymástól</button>
+    <button class="mood-start" id="mood-start-btn" onclick="startWithMood()">KEZDJÜK</button>
+    <button class="mood-skip" onclick="skipMood()">Kihagyom</button>
+</div>
 
+<!-- ░░ TÁVOLI ░░ -->
+<div id="tavoli-screen" class="hidden">
+    <div class="tav-header">
+        <span class="tav-title">📱 Távolból</span>
+        <button class="mode-btn dim" style="padding:8px 14px;font-size:0.6rem;width:auto;border-radius:20px" onclick="showMoodScreen()">← Vissza</button>
+    </div>
+    <div class="tav-list">
+        <div class="tav-card" onclick="startTavoli('napkozbeni')"><span class="tav-card-icon">☀️</span><div class="tav-card-name">Napközbeni izgalom</div><div class="tav-card-desc">Apró feladatok és üzenetek a nap folyamán.</div></div>
+        <div class="tav-card" onclick="startTavoli('fantazia')">  <span class="tav-card-icon">💭</span><div class="tav-card-name">Erotikus fantázia</div><div class="tav-card-desc">Szöveges és hangüzenet feladatok. Írd le amit gondolsz.</div></div>
+        <div class="tav-card" onclick="startTavoli('este')">      <span class="tav-card-icon">🌙</span><div class="tav-card-name">Esti rituálé</div><div class="tav-card-desc">Lefekvés előtti feladatok. Közel hoz ha messze vagy.</div></div>
+        <div class="tav-card" onclick="startTavoli('mely')">      <span class="tav-card-icon">🌊</span><div class="tav-card-name">Mély kommunikáció</div><div class="tav-card-desc">Kérdések és vallomások. Érzelmi közelség távolból.</div></div>
+        <div class="tav-card" onclick="startTavoli('vegyes')">    <span class="tav-card-icon">🎲</span><div class="tav-card-name">Vegyes csomag</div><div class="tav-card-desc">Minden típusból. Az app választ.</div></div>
+    </div>
+</div>
 
+<!-- ░░ HANGULAT SOROZAT ░░ -->
+<div id="series-screen" class="hidden">
+    <div class="ser-header">
+        <span class="ser-title">Hangulat sorozat</span>
+        <button class="mode-btn dim" style="padding:8px 14px;font-size:0.6rem;width:auto;border-radius:20px" onclick="showMainApp()">← Vissza</button>
+    </div>
+    <div class="ser-list">
+        <div class="ser-card" onclick="startSeries('lassu')">      <div class="ser-card-name">✨ Lassú Este</div><div class="ser-card-desc">Romantikus és érzéki feladatok, semmi sietség.</div><div class="ser-card-meta">5 feladat · Lágy</div></div>
+        <div class="ser-card" onclick="startSeries('feszultseg')"> <div class="ser-card-name">⚡ Feszültség Este</div><div class="ser-card-desc">Várakozás, pszichológiai játék, kontroll.</div><div class="ser-card-meta">5 feladat · Közepes</div></div>
+        <div class="ser-card" onclick="startSeries('teljes')">     <div class="ser-card-name">🔥 Teljes Este</div><div class="ser-card-desc">Fokozódó intenzitás elejétől a végéig.</div><div class="ser-card-meta">6 feladat · Vegyes</div></div>
+        <div class="ser-card" onclick="startSeries('meglepetes')"> <div class="ser-card-name">🎲 Meglepetés Este</div><div class="ser-card-desc">Az app dönt mindent. Ti csak csináljátok.</div><div class="ser-card-meta">5 feladat · Véletlen</div></div>
+    </div>
+</div>
 
-    <!-- ░░ TÁVOLI MÓD KÉPERNYŐ ░░ -->
-    <div id="tavoli-screen" class="hidden">
-        <div class="tavoli-header">
-            <span class="tavoli-title">📱 Távolból</span>
-            <button class="mode-btn dim" style="padding:8px 14px;font-size:0.6rem;width:auto;border-radius:20px" onclick="showMoodScreen()">Vissza</button>
+<!-- ░░ FŐ APP ░░ -->
+<div id="main-app" class="hidden">
+    <header>
+        <div id="status"><div class="status-dot"></div><span id="status-text">CONNECTED</span></div>
+        <div style="display:flex;gap:6px;align-items:center">
+            <button class="mode-btn dim" style="padding:6px 12px;font-size:0.55rem;width:auto;border-radius:20px" onclick="showSeriesScreen()">HANGULAT</button>
+            <button class="mode-btn dim" style="padding:6px 12px;font-size:0.55rem;width:auto;border-radius:20px" onclick="showPairScreen()">PÁROS</button>
+            <button class="safe-word" onclick="safeWord()">■ STOP</button>
         </div>
-        <div class="tavoli-subtitle">Most nem vagytok együtt — ezek a feladatok nektek szólnak</div>
-        <div class="tavoli-grid">
-            <div class="tavoli-card" onclick="startTavoli('napkozbeni')">
-                <span class="tavoli-card-icon">☀️</span>
-                <div class="tavoli-card-name">Napközbeni izgalom</div>
-                <div class="tavoli-card-desc">Apró feladatok és üzenetek a nap folyamán. 30 másodperctől 2 percig.</div>
-            </div>
-            <div class="tavoli-card" onclick="startTavoli('fantazia')">
-                <span class="tavoli-card-icon">💭</span>
-                <div class="tavoli-card-name">Erotikus fantázia</div>
-                <div class="tavoli-card-desc">Szöveges és hangüzenet feladatok. Írd le amit gondolsz.</div>
-            </div>
-            <div class="tavoli-card" onclick="startTavoli('este')">
-                <span class="tavoli-card-icon">🌙</span>
-                <div class="tavoli-card-name">Esti rituálé</div>
-                <div class="tavoli-card-desc">Lefekvés előtti feladatok. Közel hoz akkor is ha messze vagy.</div>
-            </div>
-            <div class="tavoli-card" onclick="startTavoli('mely')">
-                <span class="tavoli-card-icon">🌊</span>
-                <div class="tavoli-card-name">Mély kommunikáció</div>
-                <div class="tavoli-card-desc">Kérdések és vallomások. Az érzelmi közelség fenntartása.</div>
-            </div>
-            <div class="tavoli-card" onclick="startTavoli('vegyes')">
-                <span class="tavoli-card-icon">🎲</span>
-                <div class="tavoli-card-name">Vegyes csomag</div>
-                <div class="tavoli-card-desc">Minden típusból. Az app választ.</div>
-            </div>
-        </div>
+    </header>
+
+    <!-- AKTÍV HANGULAT BAR -->
+    <div id="active-mood-bar">
+        <span class="active-mood-label" id="active-mood-label"></span>
+        <button class="change-mood-btn" onclick="changeMood()">Változtatás</button>
     </div>
 
-    <!-- ░░ HANGULAT KÉPERNYŐ ░░ -->
-    <div id="mood-screen" class="hidden">
-        <div>
-            <div class="mood-title">Ma este...</div>
-            <div class="mood-subtitle">Milyen hangulatban vagytok?</div>
-        </div>
-        <div class="mood-grid-5">
-            <div class="mood-option" onclick="selectMood('jatekos')" id="mood-jatekos">
-                <span class="mood-emoji">😈</span>
-                <span class="mood-label">Játékos</span>
-            </div>
-            <div class="mood-option" onclick="selectMood('intim')" id="mood-intim">
-                <span class="mood-emoji">🌹</span>
-                <span class="mood-label">Intim</span>
-            </div>
-            <div class="mood-option" onclick="selectMood('vad')" id="mood-vad">
-                <span class="mood-emoji">⚡</span>
-                <span class="mood-label">Vad</span>
-            </div>
-            <div class="mood-option" onclick="selectMood('mely')" id="mood-mely">
-                <span class="mood-emoji">🌊</span>
-                <span class="mood-label">Mély</span>
-            </div>
-            <div class="mood-option" onclick="selectMood('lassu')" id="mood-lassu">
-                <span class="mood-emoji">✨</span>
-                <span class="mood-label">Lassú</span>
-            </div>
-        </div>
-        <button class="tavoli-entry-btn" onclick="showTavoliScreen()">
-            📱 Most távol vagyunk egymástól
-        </button>
-        <button class="mood-start-btn" id="mood-start-btn" onclick="startWithMood()">
-            KEZDJÜK
-        </button>
-        <button class="mode-btn dim" style="margin-top:4px" onclick="showMainApp()">
-            Kihagyom
-        </button>
-    </div>
-
-    <!-- ░░ SOROZAT KÉPERNYŐ ░░ -->
-    <div id="series-screen" class="hidden">
-        <div class="series-header">
-            <span class="series-title-big">Hangulat</span>
-            <button class="mode-btn dim" style="padding:8px 14px;font-size:0.6rem;width:auto;border-radius:20px" onclick="showMainApp()">Vissza</button>
-        </div>
-        <div class="series-list">
-            <div class="series-card" onclick="startSeries('lassu')">
-                <div class="series-card-name">✨ Lassú Este</div>
-                <div class="series-card-desc">Romantikus és érzéki feladatok, semmi sietség. A kapcsolódás az elsődleges.</div>
-                <div class="series-card-meta">5 feladat · Lágy intenzitás</div>
-            </div>
-            <div class="series-card" onclick="startSeries('feszultseg')">
-                <div class="series-card-name">⚡ Feszültség Este</div>
-                <div class="series-card-desc">Várakozás, pszichológiai játék, kontroll. A feszültség az élvezet.</div>
-                <div class="series-card-meta">5 feladat · Közepes intenzitás</div>
-            </div>
-            <div class="series-card" onclick="startSeries('teljes')">
-                <div class="series-card-name">🔥 Teljes Este</div>
-                <div class="series-card-desc">Fokozódó intenzitás az elejétől a végéig. Romantikustól a hardcore-ig.</div>
-                <div class="series-card-meta">6 feladat · Vegyes intenzitás</div>
-            </div>
-            <div class="series-card" onclick="startSeries('tavoli')">
-                <div class="series-card-name">📱 Távolsági Este</div>
-                <div class="series-card-desc">Ha most nem vagytok együtt. Üzenetek, feladatok, közös rituálék távolból.</div>
-                <div class="series-card-meta">5 feladat · Távolsági feladatok</div>
-            </div>
-            <div class="series-card" onclick="startSeries('meglepetes')">
-                <div class="series-card-name">🎲 Meglepetés Este</div>
-                <div class="series-card-desc">Az app dönt mindent. Ti csak csináljátok.</div>
-                <div class="series-card-meta">5 feladat · Véletlenszerű</div>
+    <div id="card-area">
+        <div class="category-badge intro-anim" id="category-label">— EDGE —</div>
+        <div id="task-card" class="intro-anim-2">
+            <h2 id="task-title">Készen állsz?</h2>
+            <p id="task-desc">Válassz hangulatot, majd nyomj a gombra.</p>
+            <div class="time-badge hidden" id="time-badge"></div>
+            <div class="feedback-row" id="feedback-row">
+                <button class="feedback-btn" onclick="giveFeedback('fire')">🔥</button>
+                <button class="feedback-btn" onclick="giveFeedback('ok')">👍</button>
+                <button class="feedback-btn" onclick="giveFeedback('skip')">❌</button>
             </div>
         </div>
     </div>
 
-    <!-- ░░ PÁROS MÓD KÉPERNYŐ ░░ -->
-    <div id="pair-screen" class="hidden">
-        <div>
-            <div class="pair-title">Kapcsolódás</div>
-            <div class="pair-subtitle">Add meg a közös kódot</div>
-        </div>
-        <input 
-            class="pair-code-input" 
-            id="pair-code-input"
-            type="number" 
-            maxlength="4"
-            placeholder="0000"
-            oninput="this.value=this.value.slice(0,4)"
-        >
-        <div class="mode-buttons">
-            <button class="mode-btn gold" onclick="joinAsIranyito()">
-                Irányítóként csatlakozom
-            </button>
-            <button class="mode-btn outline" onclick="joinAsBefogado()">
-                Befogadóként csatlakozom
-            </button>
-            <button class="mode-btn dim" onclick="showMainApp()">
-                Egyedül folytatom
-            </button>
-        </div>
-    </div>
+    <div id="series-progress"></div>
 
-    <!-- ░░ BEÉRKEZŐ FELADAT OVERLAY ░░ -->
-    <div id="incoming-overlay" class="hidden">
-        <div class="incoming-label">Új feladat érkezett</div>
-        <div class="incoming-from" id="incoming-from">Az Irányítótól</div>
-        <div class="incoming-card slide-in">
-            <h2 class="incoming-title" id="incoming-title"></h2>
-            <p class="incoming-desc" id="incoming-desc"></p>
-            <div class="time-badge hidden" id="incoming-time"></div>
+    <div class="controls intro-anim-3">
+        <div class="slider-label-row">
+            <span class="slider-label">LÁGY</span>
+            <span class="slider-label" id="level-text">KÖZEPES</span>
+            <span class="slider-label">INTENZÍV</span>
         </div>
-        <div class="incoming-buttons">
-            <button class="mode-btn gold" onclick="acceptTask()">Elfogadom</button>
-            <button class="mode-btn dim" onclick="rejectTask()">Újat kérek</button>
-        </div>
+        <input type="range" min="1" max="3" value="2" id="mood-slider" oninput="updateSliderLabel()">
+        <button id="action-btn" onclick="nextTask()">KEZDJÜK</button>
+        <button id="veto-btn" onclick="vetoTask()">ÚJAT KÉREK</button>
     </div>
+</div>
 
-    <div id="timer-overlay" class="hidden">
-        <div class="timer-ring">
-            <svg viewBox="0 0 200 200" width="200" height="200">
-                <circle class="timer-ring-bg" cx="100" cy="100" r="90"/>
-                <circle class="timer-ring-circle" cx="100" cy="100" r="90" id="ring-progress"/>
-            </svg>
-            <div class="timer-center">
-                <div class="timer-display" id="timer-display">0:00</div>
-                <div class="timer-label">VISSZASZÁMLÁLÁS</div>
-            </div>
+<!-- ░░ PÁROS MÓD ░░ -->
+<div id="pair-screen" class="hidden">
+    <div class="pair-title">Kapcsolódás</div>
+    <div class="pair-sub">Add meg a közös kódot</div>
+    <input class="pair-input" id="pair-code-input" type="number" maxlength="4" placeholder="0000" oninput="this.value=this.value.slice(0,4)">
+    <button class="mode-btn gold" onclick="joinAsIranyito()">Irányítóként csatlakozom</button>
+    <button class="mode-btn outline" onclick="joinAsBefogado()">Befogadóként csatlakozom</button>
+    <button class="mode-btn dim" onclick="showMainApp()">Egyedül folytatom</button>
+</div>
+
+<!-- ░░ TIMER ░░ -->
+<div id="timer-overlay" class="hidden">
+    <div class="timer-ring">
+        <svg viewBox="0 0 200 200" width="200" height="200">
+            <circle class="timer-ring-bg" cx="100" cy="100" r="90"/>
+            <circle class="timer-ring-circle" cx="100" cy="100" r="90" id="ring-progress"/>
+        </svg>
+        <div class="timer-center">
+            <div class="timer-display" id="timer-display">0:00</div>
+            <div class="timer-label">VISSZASZÁMLÁLÁS</div>
         </div>
-        <button id="timer-stop-btn" onclick="stopTimer()">LEÁLLÍT</button>
     </div>
-    <script>
+    <button id="timer-stop-btn" onclick="stopTimer()">LEÁLLÍT</button>
+</div>
+
+<script>
 // ═══════════════════════════════════════════════════════
-//  HANGULAT RENDSZER
+//  LICENC RENDSZER
 // ═══════════════════════════════════════════════════════
-
-// Hangulat → kategória/szint mapping
-const moodFilters = {
-    jatekos:  { cats: ['Játékos','Roleplay','Public Edge'],        levels: [1,2,3] },
-    intim:    { cats: ['Romantikus','Szenzoros','Érzéki','Mély'],  levels: [1,2]   },
-    vad:      { cats: ['Vad','Hardcore','BDSM-lite','Direkt'],     levels: [3]     },
-    mely:     { cats: ['Mély','Psychology','Romantikus'],          levels: [1,2]   },
-    lassu:    { cats: ['Romantikus','Sensory','Szenzoros','Mély'], levels: [1]     }
+const VALID_LICENSES = {
+    '7777-EDGE': { expires: null },
+    'ROSE-4821': { expires: null },
+    'BLUE-7392': { expires: null },
+    'GOLD-2847': { expires: null },
+    'FIRE-5510': { expires: null },
+    'LUNA-9034': { expires: null },
+    'KISS-1122': { expires: null },
 };
 
-// Távoli mód definíciók
-const tavoliModes = {
-    napkozbeni: { cats: ['Napközbeni'],                        count: 5 },
-    fantazia:   { cats: ['Fantázia'],                          count: 5 },
-    este:       { cats: ['Távoli'],       levels: [1,2],       count: 5 },
-    mely:       { cats: ['Mély'],                              count: 5 },
-    vegyes:     { cats: ['Fantázia','Napközbeni','Távoli','Mély'], count: 6 }
-};
-
-function showTavoliScreen() {
-    hideAllScreens();
-    document.getElementById('tavoli-screen').classList.remove('hidden');
+function checkStoredLicense() {
+    try {
+        const s = localStorage.getItem('edge_license');
+        if (!s) return false;
+        const { code } = JSON.parse(s);
+        if (!VALID_LICENSES[code]) return false;
+        const lic = VALID_LICENSES[code];
+        if (lic.expires && new Date(lic.expires) < new Date()) return false;
+        return true;
+    } catch(e) { return false; }
 }
 
-function showTavoliFromCalc() {
-    document.getElementById('ghost-app').classList.add('hidden');
-    document.getElementById('tavoli-screen').classList.remove('hidden');
-    loadFeedback();
-}
-
-function showMoodScreen() {
-    hideAllScreens();
-    document.getElementById('mood-screen').classList.remove('hidden');
-}
-
-function startTavoli(modeName) {
-    const mode = tavoliModes[modeName];
-    if (!mode) return;
-
-    // Sorozat logikával indítjuk
-    activeSeries  = 'tavoli_' + modeName;
-    seriesStep    = 0;
-    seriesQueue   = [];
-
-    const pool = tasksDatabase.filter(t =>
-        mode.cats.includes(t.cat) &&
-        (!mode.levels || mode.levels.includes(t.level))
-    );
-    const shuffled = [...pool].sort(() => Math.random() - 0.5);
-    for (let i = 0; i < mode.count && i < shuffled.length; i++) {
-        seriesQueue.push(shuffled[i].id);
-    }
-
-    showMainApp();
-    _showCurrentSeriesTask();
-}
-
-let selectedMood   = null;
-let feedbackData   = {};  // taskId -> 'fire'|'ok'|'skip'
-
-function selectMood(mood) {
-    // Előző deselect
-    document.querySelectorAll('.mood-option').forEach(el => el.classList.remove('selected'));
-    document.getElementById('mood-' + mood).classList.add('selected');
-    selectedMood = mood;
-    document.getElementById('mood-start-btn').classList.add('ready');
-    document.getElementById('mood-start-btn').style.opacity = '1';
-}
-
-function startWithMood() {
-    // Hangulat nélkül is továbblép
-    moodStep = 1;
-    showMainApp();
-    updateMoodProgress();
-    // Slider beállítása hangulat alapján
-    const filter = moodFilters[selectedMood];
-    const avgLevel = Math.round(filter.levels.reduce((a,b)=>a+b,0) / filter.levels.length);
-    document.getElementById('mood-slider').value = avgLevel;
-    updateSliderLabel();
-    // Első feladat azonnal, hangulat-szűrővel
-    nextTaskWithMood();
-}
-
-function nextTaskWithMood() {
-    stopTimer();
-    let pool;
-    if (selectedMood && moodFilters[selectedMood]) {
-        const f = moodFilters[selectedMood];
-        // Szűrés: kategória VAGY szint egyezés
-        pool = tasksDatabase.filter(t =>
-            f.cats.includes(t.cat) || f.levels.includes(t.level)
-        );
-        // Kizárjuk a skip-elt feladatokat
-        const skipped = Object.keys(feedbackData).filter(id => feedbackData[id] === 'skip').map(Number);
-        pool = pool.filter(t => !skipped.includes(t.id));
-    } else {
-        pool = tasksDatabase;
-    }
-    // Nem látott feladatok előnyben
-    const unseen = pool.filter(t => !seenIds.includes(t.id));
-    const final  = unseen.length > 0 ? unseen : pool;
-    if (final.length === 0) return;
-    const task = final[Math.floor(Math.random() * final.length)];
-    seenIds.push(task.id);
-    showTask(task);
-}
-
-// ═══════════════════════════════════════════════════════
-//  VISSZAJELZÉS
-// ═══════════════════════════════════════════════════════
-
-function giveFeedback(type) {
-    const title = document.getElementById('task-title').innerText;
-    const task  = tasksDatabase.find(t => t.title === title);
-    if (!task) return;
-
-    feedbackData[task.id] = type;
-
-    // Vizuális visszajelzés
-    document.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('selected'));
-    event.target.classList.add('selected');
-
-    // Mentés localStorage-ba
-    localStorage.setItem('edge_feedback', JSON.stringify(feedbackData));
-
-    // Ha skip → automatikusan következő
-    if (type === 'skip') {
-        setTimeout(() => nextTask(), 600);
-    }
-}
-
-function loadFeedback() {
-    const saved = localStorage.getItem('edge_feedback');
-    if (saved) feedbackData = JSON.parse(saved);
-}
-
-// ═══════════════════════════════════════════════════════
-//  SOROZATOK
-// ═══════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════
-//  SOROZATOK — újraírt, megbízható verzió
-// ═══════════════════════════════════════════════════════
-
-// Sorozat definíciók — kategória alapú szűrés
-const seriesDefinitions = {
-    lassu: {
-        name: '✨ Lassú Este',
-        cats:   ['Romantikus', 'Sensory', 'Szenzoros', 'Érzéki'],
-        levels: [1],
-        count:  5
-    },
-    feszultseg: {
-        name: '⚡ Feszültség Este',
-        cats:   ['Psychology', 'BDSM-lite'],
-        levels: [2, 3],
-        count:  5
-    },
-    teljes: {
-        name: '🔥 Teljes Este',
-        cats:   null,   // vegyes
-        levels: null,
-        count:  6,
-        ordered: [
-            { cats: ['Romantikus'],              levels: [1] },
-            { cats: ['Sensory','Szenzoros'],     levels: [1,2] },
-            { cats: ['Roleplay'],                levels: [2] },
-            { cats: ['BDSM-lite'],               levels: [2] },
-            { cats: ['Hardcore'],                levels: [3] },
-            { cats: ['Direkt'],                  levels: [3] }
-        ]
-    },
-    tavoli: {
-        name: '📱 Távolsági Este',
-        cats:   ['Távoli'],
-        levels: [1, 2, 3],
-        count:  5
-    },
-    meglepetes: {
-        name: '🎲 Meglepetés Este',
-        cats:   null,
-        levels: null,
-        count:  5
-    }
-};
-
-// Állapot
-let activeSeries   = null;
-let seriesQueue    = [];   // előre kiválasztott feladat ID-k
-let seriesStep     = 0;    // hány feladatnál tartunk (0-tól)
-
-// ── Sorozat indítása ──
-function startSeries(name) {
-    const def = seriesDefinitions[name];
-    if (!def) return;
-
-    activeSeries = name;
-    seriesStep   = 0;
-    seriesQueue  = [];
-
-    // Feladatok előre kiválasztása
-    if (def.ordered) {
-        // Teljes Este: meghatározott sorrendben
-        for (const slot of def.ordered) {
-            const pool = tasksDatabase.filter(t =>
-                slot.cats.includes(t.cat) &&
-                slot.levels.includes(t.level) &&
-                !seriesQueue.includes(t.id)
-            );
-            if (pool.length > 0) {
-                const t = pool[Math.floor(Math.random() * pool.length)];
-                seriesQueue.push(t.id);
-            }
-        }
-    } else if (def.cats === null) {
-        // Meglepetés: teljesen véletlen
-        const shuffled = [...tasksDatabase].sort(() => Math.random() - 0.5);
-        for (let i = 0; i < def.count; i++) {
-            const t = shuffled[i];
-            if (t) seriesQueue.push(t.id);
-        }
-    } else {
-        // Kategória alapú
-        const pool = tasksDatabase.filter(t =>
-            def.cats.includes(t.cat) &&
-            def.levels.includes(t.level)
-        );
-        const shuffled = [...pool].sort(() => Math.random() - 0.5);
-        for (let i = 0; i < def.count && i < shuffled.length; i++) {
-            seriesQueue.push(shuffled[i].id);
-        }
-        // Ha kevés van, fallback csak kategória szerint
-        if (seriesQueue.length < def.count) {
-            const fallback = tasksDatabase.filter(t =>
-                def.cats.includes(t.cat) && !seriesQueue.includes(t.id)
-            ).sort(() => Math.random() - 0.5);
-            for (const t of fallback) {
-                if (seriesQueue.length >= def.count) break;
-                seriesQueue.push(t.id);
-            }
-        }
-    }
-
-    showMainApp();
-    _showCurrentSeriesTask();
-}
-
-// ── Aktuális feladat megjelenítése ──
-function _showCurrentSeriesTask() {
-    if (seriesStep >= seriesQueue.length) {
-        _endSeries();
-        return;
-    }
-
-    const task = tasksDatabase.find(t => t.id === seriesQueue[seriesStep]);
-    if (task) showTask(task);
-
-    // Progress pöttyök
-    _renderSeriesProgress();
-
-    // Gomb
-    const btn  = document.getElementById('action-btn');
-    const veto = document.getElementById('veto-btn');
-    const isLast = (seriesStep >= seriesQueue.length - 1);
-
-    btn.innerText = isLast ? 'BEFEJEZÉS' : 'KÖVETKEZŐ →';
-    btn.onclick   = _nextSeriesTask;
-    btn.style.opacity = '1';
-    if (veto) veto.style.display = 'none';
-}
-
-// ── Következő feladat ──
-function _nextSeriesTask() {
-    seriesStep++;
-    _showCurrentSeriesTask();
-}
-
-// ── Progress pöttyök ──
-function _renderSeriesProgress() {
-    const prog = document.getElementById('series-progress');
-    if (!prog) return;
-    prog.style.display = 'flex';
-    prog.innerHTML = '';
-    for (let i = 0; i < seriesQueue.length; i++) {
-        const dot = document.createElement('div');
-        dot.className = 'series-dot';
-        if (i < seriesStep)  dot.classList.add('done');
-        if (i === seriesStep) dot.classList.add('active');
-        prog.appendChild(dot);
-    }
-}
-
-// ── Sorozat vége ──
-function _endSeries() {
-    const def = seriesDefinitions[activeSeries];
-    activeSeries = null;
-    seriesStep   = 0;
-    seriesQueue  = [];
-
-    document.getElementById('series-progress').style.display = 'none';
-    document.getElementById('task-title').innerText   = 'Vége 🌙';
-    document.getElementById('task-desc').innerText    = 'A sorozat véget ért. Reméljük jól telt az est!';
-    document.getElementById('category-label').innerText = '— BEFEJEZVE —';
-    document.getElementById('feedback-row').style.display = 'none';
-
-    const btn  = document.getElementById('action-btn');
-    const veto = document.getElementById('veto-btn');
-    btn.innerText = 'ÚJ HANGULAT';
-    btn.onclick   = () => {
-        btn.onclick = nextTask;
-        if (veto) { veto.style.display = 'block'; }
-        hideAllScreens();
-        document.getElementById('series-screen').classList.remove('hidden');
-    };
-    if (veto) veto.style.display = 'none';
-}
-
-// showSeriesScreen navigáció
-function showSeriesScreen() {
-    hideAllScreens();
-    document.getElementById('series-screen').classList.remove('hidden');
-}
-
-// renderSeriesProgress — régi névkompatibilitás
-function renderSeriesProgress() { _renderSeriesProgress(); }
-
-// ═══════════════════════════════════════════════════════
-//  NAVIGÁCIÓ - felülírjuk a showMainApp-ot
-// ═══════════════════════════════════════════════════════
-
-function hideAllScreens() {
-    ['ghost-app','main-app','pair-screen','mood-screen','series-screen','tavoli-screen'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.add('hidden');
-    });
-}
-
-// showMainApp felülírása - hangulat képernyőt is kezelje
-const _origShowMainApp = showMainApp;
-function showMainApp() {
-    hideAllScreens();
-    document.getElementById('main-app').classList.remove('hidden');
-}
-
-// nextTask felülírása - sorozat módban más logika
-let moodStep = 0;
-const MOOD_TOTAL = 5;
-
-const _origNextTask2 = nextTask;
-function nextTask() {
-    if (activeSeries) {
-        seriesStep++;
-        showSeriesTask();
-        return;
-    }
-    if (selectedMood) {
-        moodStep++;
-        if (moodStep > MOOD_TOTAL) {
-            // 5 feladat után reset
-            moodStep = 1;
-        }
-        nextTaskWithMood();
-        updateMoodProgress();
-        return;
-    }
-    // Eredeti logika
-    stopTimer();
-    // Veto gomb visszaállítása
-    const vetoBtn = document.getElementById('veto-btn');
-    if (vetoBtn) { vetoBtn.style.display = 'block'; vetoBtn.onclick = vetoTask; }
-    const actionBtn = document.getElementById('action-btn');
-    if (actionBtn) { actionBtn.innerText = 'KÖVETKEZŐ'; actionBtn.onclick = nextTask; actionBtn.style.opacity = '1'; }
-    const level   = parseInt(document.getElementById('mood-slider').value);
-    let filtered  = tasksDatabase.filter(t => t.level === level);
-    const unseenIds = filtered.map(t => t.id).filter(id => !seenIds.includes(id));
-    if (unseenIds.length === 0) seenIds = seenIds.filter(id => !filtered.map(t=>t.id).includes(id));
-    const unseen  = filtered.filter(t => !seenIds.includes(t.id));
-    const pool    = unseen.length > 0 ? unseen : filtered;
-    const task    = pool[Math.floor(Math.random() * pool.length)];
-    seenIds.push(task.id);
-    showTask(task);
-}
-
-function updateMoodProgress() {
-    const prog = document.getElementById('series-progress');
-    if (!selectedMood) { prog.style.display = 'none'; return; }
-    prog.style.display = 'flex';
-    prog.innerHTML = '';
-    for (let i = 1; i <= MOOD_TOTAL; i++) {
-        const dot = document.createElement('div');
-        dot.className = 'series-dot';
-        if (i < moodStep)  dot.classList.add('done');
-        if (i === moodStep) dot.classList.add('active');
-        prog.appendChild(dot);
-    }
-    // Gomb szövege
-    document.getElementById('action-btn').innerText =
-        moodStep >= MOOD_TOTAL ? 'ÚJ HANGULAT' : 'KÖVETKEZŐ';
-    if (moodStep >= MOOD_TOTAL) {
-        document.getElementById('action-btn').onclick = () => {
-            moodStep = 0;
-            selectedMood = null;
-            prog.style.display = 'none';
+function activateLicense() {
+    const inp = document.getElementById('license-input');
+    const code = inp.value.trim().toUpperCase();
+    if (VALID_LICENSES[code]) {
+        const lic = VALID_LICENSES[code];
+        if (!lic.expires || new Date(lic.expires) >= new Date()) {
+            localStorage.setItem('edge_license', JSON.stringify({ code, activatedAt: new Date().toISOString() }));
             hideAllScreens();
             document.getElementById('mood-screen').classList.remove('hidden');
-            document.getElementById('action-btn').onclick = nextTask;
-        };
-    }
-}
-
-// showTask felülírása - feedback gombok mutatása
-const _origShowTask = showTask;
-function showTask(task) {
-    _origShowTask(task);
-    // Veto gomb visszaállítása ha nem sorozat és nem befogadó
-    const veto = document.getElementById('veto-btn');
-    if (veto && !activeSeries && myRole !== 'befogado') {
-        veto.style.display = 'block';
-    }
-    // Feedback sor megjelenítése
-    setTimeout(() => {
-        const row = document.getElementById('feedback-row');
-        if (row) {
-            row.style.display = 'flex';
-            // Reset
-            document.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('selected'));
-            // Korábbi visszajelzés mutatása ha van
-            if (feedbackData[task.id]) {
-                const map = { fire: 0, ok: 1, skip: 2 };
-                const btns = document.querySelectorAll('.feedback-btn');
-                if (btns[map[feedbackData[task.id]]]) btns[map[feedbackData[task.id]]].classList.add('selected');
-            }
+            loadFeedback();
+            if (navigator.vibrate) navigator.vibrate([100,50,200]);
+            return;
         }
-    }, 350);
-}
-
-// Unlock módosítása - hangulat képernyőre navigál
-const _origUnlock = unlock;
-function unlock() {
-    if (inputBuffer.trim() === '77') {
-        document.getElementById('ghost-app').classList.add('hidden');
-        document.getElementById('mood-screen').classList.remove('hidden');
-        loadFeedback();
-        if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
-        inputBuffer = '';
-    } else {
-        resetCalc();
     }
+    inp.classList.add('error');
+    inp.value = '';
+    setTimeout(() => inp.classList.remove('error'), 1000);
 }
-
 
 // ═══════════════════════════════════════════════════════
-//  PÁROS MÓD — Shared Storage alapú szinkron
+//  FELADATOK ADATBÁZISA
 // ═══════════════════════════════════════════════════════
-
-let pairCode    = null;   // 4 jegyű közös kód
-let myRole      = null;   // 'iranyito' vagy 'befogado'
-let pollTimer   = null;   // Befogadó polling timer
-let lastTaskId  = null;   // Utoljára látott feladat ID
-
-// ── NAVIGÁCIÓ ──
-function showPairScreen() {
-    hideAllScreens();
-    document.getElementById('pair-screen').classList.remove('hidden');
-}
-
-// showMainApp a navigáció blokkban van definiálva
-
-// ── CSATLAKOZÁS ──
-function getPairCode() {
-    const val = document.getElementById('pair-code-input').value.trim();
-    if (val.length !== 4 || isNaN(val)) {
-        alert('Írj be egy 4 jegyű számot!');
-        return null;
-    }
-    return val;
-}
-
-function joinAsIranyito() {
-    const code = getPairCode();
-    if (!code) return;
-    pairCode = code;
-    myRole   = 'iranyito';
-    
-    // Töröljük az esetleges régi feladatot
-    clearSharedTask();
-    
-    showMainApp();
-    updateRoleBadge();
-    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-}
-
-function joinAsBefogado() {
-    const code = getPairCode();
-    if (!code) return;
-    pairCode = code;
-    myRole   = 'befogado';
-    
-    showMainApp();
-    updateRoleBadge();
-    startPolling();
-    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-}
-
-function updateRoleBadge() {
-    const statusText = document.getElementById('status-text');
-    if (myRole === 'iranyito') {
-        statusText.innerHTML = '<span style="color:var(--gold);letter-spacing:2px">IRÁNYÍTÓ</span>';
-    } else if (myRole === 'befogado') {
-        statusText.innerHTML = '<span style="color:#aaa;letter-spacing:2px">BEFOGADÓ</span>';
-    } else {
-        statusText.textContent = 'CONNECTED';
-    }
-    
-    // Akció gomb szövege
-    if (myRole === 'befogado') {
-        document.getElementById('action-btn').textContent = 'VÁROK...';
-        document.getElementById('action-btn').style.opacity = '0.5';
-        document.getElementById('veto-btn').style.display = 'none';
-        document.getElementById('mood-slider').parentElement.style.opacity = '0.3';
-    }
-}
-
-// ── SHARED STORAGE (JSONBin.io) ──
-// Ingyenes API, nem kell regisztráció az olvasáshoz
-// A bin ID-t a párKód alapján generáljuk localStorage-ban
-
-const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
-const JSONBIN_KEY  = '$2a$10$JO3HYFjszG.TWKlikq3h.O5PG6wMMJp5FZtRuCV5u8cLYuT4Bdfgy'; // Lásd lent - saját key kell
-
-// localStorage-ban tároljuk a bin ID-ket kódonként
-function getBinId(code) {
-    return localStorage.getItem('edge_bin_' + code);
-}
-function setBinId(code, id) {
-    localStorage.setItem('edge_bin_' + code, id);
-}
-
-async function writeSharedTask(task) {
-    const data = {
-        taskId: task.id,
-        title:  task.title,
-        desc:   task.desc,
-        cat:    task.cat,
-        level:  task.level,
-        time:   task.time || 0,
-        sentAt: Date.now()
-    };
-
-    const binId = getBinId(pairCode);
-    try {
-        if (binId) {
-            // Frissítjük a meglévő bin-t
-            await fetch(`${JSONBIN_BASE}/b/${binId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
-                body: JSON.stringify(data)
-            });
-        } else {
-            // Létrehozunk egy új bin-t
-            const res = await fetch(`${JSONBIN_BASE}/b`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': JSONBIN_KEY,
-                    'X-Bin-Name': 'edge_' + pairCode,
-                    'X-Bin-Private': 'false'
-                },
-                body: JSON.stringify(data)
-            });
-            const json = await res.json();
-            if (json.metadata && json.metadata.id) {
-                setBinId(pairCode, json.metadata.id);
-            }
-        }
-        flashSyncDot();
-    } catch(e) {
-        console.log('Write error:', e);
-        // Fallback: localStorage
-        localStorage.setItem('edge_task_' + pairCode, JSON.stringify(data));
-        flashSyncDot();
-    }
-}
-
-async function readSharedTask() {
-    const binId = getBinId(pairCode);
-    try {
-        if (binId) {
-            const res  = await fetch(`${JSONBIN_BASE}/b/${binId}/latest`, {
-                headers: { 'X-Master-Key': JSONBIN_KEY }
-            });
-            const json = await res.json();
-            return json.record || null;
-        }
-    } catch(e) {}
-    // Fallback: localStorage (ha ugyanazon az eszközön tesztelik)
-    const local = localStorage.getItem('edge_task_' + pairCode);
-    return local ? JSON.parse(local) : null;
-}
-
-async function clearSharedTask() {
-    if (!pairCode) return;
-    localStorage.removeItem('edge_task_' + pairCode);
-}
-
-// ── SZINKRON DOT ──
-function flashSyncDot() {
-    const dot = document.getElementById('sync-dot');
-    dot.classList.add('synced', 'pulse');
-    setTimeout(() => dot.classList.remove('pulse'), 3000);
-}
-
-// ── IRÁNYÍTÓ: feladat küldése ──
-// Az eredeti nextTask-ot felülírjuk ha Irányítók vagyunk
-const _originalNextTask = nextTask;
-
-function nextTask() {
-    if (myRole === 'iranyito') {
-        // Generálunk egy feladatot és elküldjük
-        stopTimer();
-        const level    = parseInt(document.getElementById('mood-slider').value);
-        let filtered   = tasksDatabase.filter(t => t.level === level);
-        const unseenIds = filtered.map(t => t.id).filter(id => !seenIds.includes(id));
-        if (unseenIds.length === 0) seenIds = seenIds.filter(id => !filtered.map(t=>t.id).includes(id));
-        const unseen   = filtered.filter(t => !seenIds.includes(t.id));
-        const pool     = unseen.length > 0 ? unseen : filtered;
-        const task     = pool[Math.floor(Math.random() * pool.length)];
-        seenIds.push(task.id);
-        
-        // Megjelenítés saját képernyőn
-        showTask(task);
-        
-        // Küldés a Befogadónak
-        writeSharedTask(task);
-        
-        // Gomb visszajelzés
-        const btn = document.getElementById('action-btn');
-        const orig = btn.textContent;
-        btn.textContent = 'ELKÜLDVE ✓';
-        setTimeout(() => btn.textContent = 'KÖVETKEZŐ', 1500);
-        
-    } else {
-        // Egyedüli mód
-        stopTimer();
-        const level    = parseInt(document.getElementById('mood-slider').value);
-        let filtered   = tasksDatabase.filter(t => t.level === level);
-        const unseenIds = filtered.map(t => t.id).filter(id => !seenIds.includes(id));
-        if (unseenIds.length === 0) seenIds = seenIds.filter(id => !filtered.map(t=>t.id).includes(id));
-        const unseen   = filtered.filter(t => !seenIds.includes(t.id));
-        const pool     = unseen.length > 0 ? unseen : filtered;
-        const task     = pool[Math.floor(Math.random() * pool.length)];
-        seenIds.push(task.id);
-        showTask(task);
-    }
-}
-
-// ── BEFOGADÓ: polling ──
-function startPolling() {
-    if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(checkForNewTask, 3000); // 3 másodpercenként
-}
-
-async function checkForNewTask() {
-    if (myRole !== 'befogado' || !pairCode) return;
-    
-    const data = await readSharedTask();
-    if (!data) return;
-    
-    // Csak ha új feladat érkezett
-    if (data.taskId === lastTaskId) return;
-    if (Date.now() - data.sentAt > 300000) return; // 5 percnél régebbi = skip
-    
-    lastTaskId = data.taskId;
-    showIncomingTask(data);
-}
-
-// ── BEÉRKEZŐ FELADAT ──
-function showIncomingTask(data) {
-    document.getElementById('incoming-title').textContent = data.title;
-    document.getElementById('incoming-desc').textContent  = data.desc;
-    
-    const timeBadge = document.getElementById('incoming-time');
-    if (data.time && data.time > 0) {
-        const m = Math.floor(data.time / 60);
-        timeBadge.textContent = m + ' perc';
-        timeBadge.classList.remove('hidden');
-    } else {
-        timeBadge.classList.add('hidden');
-    }
-    
-    document.getElementById('incoming-overlay').classList.remove('hidden');
-    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-}
-
-function acceptTask() {
-    const title = document.getElementById('incoming-title').textContent;
-    const desc  = document.getElementById('incoming-desc').textContent;
-    
-    // Megjelenítjük a fő kártyán
-    document.getElementById('category-label').textContent = '— BEFOGADÓ —';
-    document.getElementById('task-title').textContent = title;
-    document.getElementById('task-desc').textContent  = desc;
-    
-    document.getElementById('incoming-overlay').classList.add('hidden');
-    flashSyncDot();
-}
-
-function rejectTask() {
-    // Szól az Irányítónak hogy új feladatot szeretnénk
-    lastTaskId = null; // Újra megmutatja ha ugyanaz jön
-    document.getElementById('incoming-overlay').classList.add('hidden');
-    // TODO: reject jelzés visszafelé
-}
-
-// ── CLEANUP ──
-const _originalSafeWord = safeWord;
-function safeWord() {
-    if (pollTimer) clearInterval(pollTimer);
-    clearSharedTask();
-    _originalSafeWord();
-}
-
-
-
-// ═══════════════════════════════════════════════════════
-//  EDGE APP — app.js
-//  Titkos kód: 77 + ✦ gomb
-// ═══════════════════════════════════════════════════════
-
-// Intenzitás emoji → level konverzió
-// 🌹 / ✨ / 💨 / 🖤 → 1 (Lágy)
-// 🔥 / 🔥🔥 / 🖼️ / 📱 → 2 (Közepes)
-// 🔥🔥🔥 → 3 (Intenzív)
-
 const tasksDatabase = [
   { id: 1,   cat: "Hardcore",     title: "10 cm-es tilalom",            desc: `A Domináns kijelöl egy pontot a párján. 15 percig bárhol érintheti, kivéve ott. A cél a feszültség.`,  level: 3 },
   { id: 2,   cat: "Romantikus",   title: "Szívritmus",                  desc: `Üljetek szemben, kéz a szívre. 5 percig csak egymás légzését figyeljétek csendben.`,  level: 1, time: 300 },
@@ -2176,182 +673,528 @@ const tasksDatabase = [
 // ═══════════════════════════════════════════════════════
 //  ÁLLAPOT
 // ═══════════════════════════════════════════════════════
-let inputBuffer   = "";
+let inputBuffer   = '';
+let selectedMood  = null;
+let moodStep      = 0;
+let seenIds       = [];
+let feedbackData  = {};
+let activeSeries  = null;
+let seriesQueue   = [];
+let seriesStep    = 0;
 let timerInterval = null;
 let timerSeconds  = 0;
-let seenIds       = [];
+let pairCode      = null;
+let myRole        = null;
+let pollTimer     = null;
+let lastTaskId    = null;
+
+const MOOD_TOTAL  = 5;
+const TAVOLI_CATS = ['Fantázia','Napközbeni','Távoli'];
+
+const moodFilters = {
+    jatekos: { cats: ['Játékos','Roleplay','Public Edge'],                  levels: [1,2,3] },
+    intim:   { cats: ['Romantikus','Szenzoros','Sensory','Érzéki','Mély'],  levels: [1,2]   },
+    vad:     { cats: ['Vad','Hardcore','BDSM-lite','Direkt'],               levels: [2,3]   },
+    mely:    { cats: ['Mély','Psychology','Romantikus'],                    levels: [1,2]   },
+    lassu:   { cats: ['Romantikus','Sensory','Szenzoros','Érzéki'],         levels: [1]     }
+};
+
+const moodLabels = {
+    jatekos: '😈 Játékos',
+    intim:   '🌹 Intim',
+    vad:     '⚡ Vad',
+    mely:    '🌊 Mély',
+    lassu:   '✨ Lassú'
+};
+
+const seriesDefinitions = {
+    lassu:      { cats: ['Romantikus','Sensory','Szenzoros','Érzéki'], levels: [1],     count: 5 },
+    feszultseg: { cats: ['Psychology','BDSM-lite'],                    levels: [2,3],   count: 5 },
+    teljes:     { ordered: [
+        { cats: ['Romantikus'],           levels: [1]   },
+        { cats: ['Sensory','Szenzoros'],  levels: [1,2] },
+        { cats: ['Roleplay'],             levels: [2]   },
+        { cats: ['BDSM-lite'],            levels: [2]   },
+        { cats: ['Hardcore'],             levels: [3]   },
+        { cats: ['Direkt'],               levels: [3]   }
+    ]},
+    meglepetes: { cats: null, levels: null, count: 5 }
+};
+
+const tavoliModes = {
+    napkozbeni: { cats: ['Napközbeni'],                             count: 5 },
+    fantazia:   { cats: ['Fantázia'],                               count: 5 },
+    este:       { cats: ['Távoli'],       levels: [1,2],            count: 5 },
+    mely:       { cats: ['Mély'],                                   count: 5 },
+    vegyes:     { cats: ['Fantázia','Napközbeni','Távoli','Mély'],  count: 6 }
+};
 
 // ═══════════════════════════════════════════════════════
 //  SZÁMOLÓGÉP
 // ═══════════════════════════════════════════════════════
 function calc(num) {
     inputBuffer += String(num);
-    document.querySelector('.calc-display').innerText = inputBuffer;
+    document.getElementById('calc-display').innerText = inputBuffer;
 }
-
 function resetCalc() {
-    inputBuffer = "";
-    document.querySelector('.calc-display').innerText = "0";
+    inputBuffer = '';
+    document.getElementById('calc-display').innerText = '0';
 }
-
 function unlock() {
-    if (inputBuffer.trim() === "77") {
+    if (inputBuffer.trim() === '77') {
+        inputBuffer = '';
         document.getElementById('ghost-app').classList.add('hidden');
-        document.getElementById('main-app').classList.remove('hidden');
-        if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
+        if (navigator.vibrate) navigator.vibrate([100,50,200]);
+        if (checkStoredLicense()) {
+            document.getElementById('mood-screen').classList.remove('hidden');
+            loadFeedback();
+        } else {
+            document.getElementById('license-screen').classList.remove('hidden');
+        }
     } else {
         resetCalc();
     }
 }
 
 // ═══════════════════════════════════════════════════════
-//  SAFE WORD
+//  NAVIGÁCIÓ
 // ═══════════════════════════════════════════════════════
+function hideAllScreens() {
+    ['ghost-app','license-screen','mood-screen','tavoli-screen',
+     'series-screen','main-app','pair-screen','timer-overlay'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+    });
+}
+function showMainApp() {
+    hideAllScreens();
+    document.getElementById('main-app').classList.remove('hidden');
+    updateActiveMoodBar();
+}
+function showMoodScreen() {
+    hideAllScreens();
+    document.getElementById('mood-screen').classList.remove('hidden');
+}
+function showTavoliScreen() {
+    hideAllScreens();
+    document.getElementById('tavoli-screen').classList.remove('hidden');
+}
+function showSeriesScreen() {
+    hideAllScreens();
+    document.getElementById('series-screen').classList.remove('hidden');
+}
+function showPairScreen() {
+    hideAllScreens();
+    document.getElementById('pair-screen').classList.remove('hidden');
+}
 function safeWord() {
     stopTimer();
-    location.reload();
+    if (pollTimer) clearInterval(pollTimer);
+    hideAllScreens();
+    document.getElementById('ghost-app').classList.remove('hidden');
+    document.getElementById('calc-display').innerText = '0';
+    inputBuffer = '';
 }
 
 // ═══════════════════════════════════════════════════════
-//  SLIDER LABEL
+//  HANGULAT
 // ═══════════════════════════════════════════════════════
-function updateSliderLabel() {
-    const v = parseInt(document.getElementById('mood-slider').value);
-    const labels = { 1: "LÁGY", 2: "KÖZEPES", 3: "INTENZÍV" };
-    document.getElementById('level-text').innerText = labels[v];
+function selectMood(mood) {
+    document.querySelectorAll('.mood-opt').forEach(el => el.classList.remove('selected'));
+    const el = document.getElementById('mood-' + mood);
+    if (el) el.classList.add('selected');
+    selectedMood = mood;
+}
+function skipMood() {
+    selectedMood = null;
+    showMainApp();
+}
+function startWithMood() {
+    moodStep = 1;
+    showMainApp();
+    updateActiveMoodBar();
+    if (selectedMood && moodFilters[selectedMood]) {
+        const f = moodFilters[selectedMood];
+        if (f.levels && f.levels.length > 0) {
+            const avg = Math.round(f.levels.reduce((a,b)=>a+b,0)/f.levels.length);
+            document.getElementById('mood-slider').value = Math.min(3,Math.max(1,avg));
+            updateSliderLabel();
+        }
+    }
+    nextTask();
+}
+function changeMood() {
+    selectedMood = null;
+    moodStep = 0;
+    document.querySelectorAll('.mood-opt').forEach(el => el.classList.remove('selected'));
+    document.getElementById('series-progress').style.display = 'none';
+    showMoodScreen();
+}
+function updateActiveMoodBar() {
+    const bar   = document.getElementById('active-mood-bar');
+    const label = document.getElementById('active-mood-label');
+    if (!bar || !label) return;
+    if (selectedMood && moodLabels[selectedMood]) {
+        bar.style.display   = 'flex';
+        label.textContent   = moodLabels[selectedMood];
+    } else {
+        bar.style.display   = 'none';
+    }
 }
 
 // ═══════════════════════════════════════════════════════
 //  FELADAT LOGIKA
 // ═══════════════════════════════════════════════════════
-function nextTask() {
-    stopTimer();
+function getPool() {
     const level   = parseInt(document.getElementById('mood-slider').value);
-    let filtered  = tasksDatabase.filter(t => t.level === level);
+    const skipped = Object.keys(feedbackData).filter(id => feedbackData[id]==='skip').map(Number);
 
-    // Ha minden feladatot láttunk, reseteljük
-    const unseenIds = filtered.map(t => t.id).filter(id => !seenIds.includes(id));
-    if (unseenIds.length === 0) {
-        seenIds = seenIds.filter(id => !filtered.map(t => t.id).includes(id));
+    let pool;
+    if (selectedMood && moodFilters[selectedMood]) {
+        const f = moodFilters[selectedMood];
+        // Hangulat + szint + távoli kizárás
+        pool = tasksDatabase.filter(t => {
+            if (skipped.includes(t.id)) return false;
+            if (TAVOLI_CATS.includes(t.cat)) return false;
+            const moodOk = (t.mood === selectedMood) || (f.cats.includes(t.cat) && f.levels.includes(t.level));
+            return moodOk;
+        });
+        if (pool.length < 3) {
+            pool = tasksDatabase.filter(t =>
+                !skipped.includes(t.id) && !TAVOLI_CATS.includes(t.cat) &&
+                (t.mood === selectedMood || f.cats.includes(t.cat))
+            );
+        }
+    } else {
+        pool = tasksDatabase.filter(t =>
+            !skipped.includes(t.id) && !TAVOLI_CATS.includes(t.cat) && t.level === level
+        );
+        if (pool.length === 0) pool = tasksDatabase.filter(t => !TAVOLI_CATS.includes(t.cat));
     }
+    return pool.length > 0 ? pool : tasksDatabase.filter(t => !TAVOLI_CATS.includes(t.cat));
+}
 
-    const unseen  = filtered.filter(t => !seenIds.includes(t.id));
-    const pool    = unseen.length > 0 ? unseen : filtered;
-    const task    = pool[Math.floor(Math.random() * pool.length)];
+function pickTask(pool) {
+    const unseen = pool.filter(t => !seenIds.includes(t.id));
+    const final  = unseen.length > 0 ? unseen : pool;
+    return final[Math.floor(Math.random() * final.length)];
+}
+
+function nextTask() {
+    if (activeSeries) { seriesStep++; _showCurrentSeriesTask(); return; }
+    stopTimer();
+    const veto = document.getElementById('veto-btn');
+    if (veto) { veto.style.display='block'; veto.onclick=vetoTask; }
+    const btn = document.getElementById('action-btn');
+    if (btn) { btn.innerText='KÖVETKEZŐ'; btn.onclick=nextTask; btn.style.opacity='1'; }
+    const task = pickTask(getPool());
+    if (!task) return;
     seenIds.push(task.id);
-
     showTask(task);
+    if (selectedMood) {
+        moodStep++;
+        updateMoodProgress();
+    }
 }
 
 function vetoTask() {
     stopTimer();
-    const level  = parseInt(document.getElementById('mood-slider').value);
-    let filtered = tasksDatabase.filter(t => t.level === level);
+    const pool    = getPool();
     const current = document.getElementById('task-title').innerText;
-    const pool   = filtered.filter(t => t.title !== current);
-    if (pool.length === 0) return;
-    const task   = pool[Math.floor(Math.random() * pool.length)];
+    const other   = pool.filter(t => t.title !== current);
+    const task    = pickTask(other.length > 0 ? other : pool);
+    if (!task) return;
+    seenIds.push(task.id);
     showTask(task);
+}
+
+function updateMoodProgress() {
+    const prog = document.getElementById('series-progress');
+    if (!prog || !selectedMood) return;
+    prog.style.display = 'flex';
+    prog.innerHTML = '';
+    for (let i = 1; i <= MOOD_TOTAL; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'series-dot' + (i < moodStep ? ' done' : '') + (i === moodStep ? ' active' : '');
+        prog.appendChild(dot);
+    }
+    const btn = document.getElementById('action-btn');
+    if (moodStep >= MOOD_TOTAL) {
+        btn.innerText = 'ÚJ HANGULAT';
+        btn.onclick = () => { moodStep=0; selectedMood=null; prog.style.display='none'; showMoodScreen(); btn.onclick=nextTask; };
+    }
 }
 
 function showTask(task) {
     const card = document.getElementById('task-card');
     card.classList.add('transitioning');
-
     setTimeout(() => {
-        document.getElementById('category-label').innerText = `— ${task.cat.toUpperCase()} —`;
+        document.getElementById('category-label').innerText = '— ' + task.cat.toUpperCase() + ' —';
         document.getElementById('task-title').innerText     = task.title;
         document.getElementById('task-desc').innerText      = task.desc;
-
-        // Idő badge
-        const timeBadge = document.getElementById('time-badge');
+        const tb = document.getElementById('time-badge');
         if (task.time && task.time > 0) {
-            const m = Math.floor(task.time / 60);
-            const s = task.time % 60;
-            timeBadge.innerText = s > 0 ? `${m} perc ${s} mp` : `${m} perc`;
-            timeBadge.classList.remove('hidden');
-            timeBadge.onclick = () => startTimer(task.time, task.title);
+            const m = Math.floor(task.time/60), s = task.time%60;
+            tb.innerText = s > 0 ? m+'p '+s+'mp' : m+' perc';
+            tb.classList.remove('hidden');
+            tb.onclick = () => startTimer(task.time);
         } else {
-            timeBadge.classList.add('hidden');
-            timeBadge.onclick = null;
+            tb.classList.add('hidden');
+            tb.onclick = null;
         }
-
-        // Action gomb szövege
-        document.getElementById('action-btn').innerText = "KÖVETKEZŐ";
-
+        const fr = document.getElementById('feedback-row');
+        if (fr) {
+            fr.style.display = 'flex';
+            document.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('selected'));
+            if (feedbackData[task.id]) {
+                const map = { fire:0, ok:1, skip:2 };
+                const btns = document.querySelectorAll('.feedback-btn');
+                if (btns[map[feedbackData[task.id]]]) btns[map[feedbackData[task.id]]].classList.add('selected');
+            }
+        }
         card.classList.remove('transitioning');
-        if (navigator.vibrate) navigator.vibrate([30, 60, 30]);
+        if (navigator.vibrate) navigator.vibrate([30,60,30]);
     }, 300);
+}
+
+function giveFeedback(type) {
+    const title = document.getElementById('task-title').innerText;
+    const task  = tasksDatabase.find(t => t.title === title);
+    if (!task) return;
+    feedbackData[task.id] = type;
+    document.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('selected'));
+    event.target.classList.add('selected');
+    localStorage.setItem('edge_feedback', JSON.stringify(feedbackData));
+    if (type === 'skip') setTimeout(() => nextTask(), 600);
+}
+
+function loadFeedback() {
+    try {
+        const s = localStorage.getItem('edge_feedback');
+        if (s) feedbackData = JSON.parse(s);
+    } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+//  SOROZATOK
+// ═══════════════════════════════════════════════════════
+function startSeries(name) {
+    const def = seriesDefinitions[name];
+    if (!def) return;
+    activeSeries = name; seriesStep = 0; seriesQueue = [];
+    if (def.ordered) {
+        for (const slot of def.ordered) {
+            const p = tasksDatabase.filter(t => slot.cats.includes(t.cat) && slot.levels.includes(t.level) && !seriesQueue.includes(t.id));
+            if (p.length) seriesQueue.push(p[Math.floor(Math.random()*p.length)].id);
+        }
+    } else if (def.cats === null) {
+        const sh = [...tasksDatabase].sort(()=>Math.random()-0.5);
+        for (let i=0;i<def.count&&i<sh.length;i++) seriesQueue.push(sh[i].id);
+    } else {
+        const p = tasksDatabase.filter(t => def.cats.includes(t.cat) && (!def.levels||def.levels.includes(t.level)));
+        const sh = [...p].sort(()=>Math.random()-0.5);
+        for (let i=0;i<def.count&&i<sh.length;i++) seriesQueue.push(sh[i].id);
+    }
+    showMainApp();
+    _showCurrentSeriesTask();
+}
+
+function startTavoli(name) {
+    const mode = tavoliModes[name];
+    if (!mode) return;
+    activeSeries = 'tavoli_'+name; seriesStep = 0; seriesQueue = [];
+    const pool = tasksDatabase.filter(t => mode.cats.includes(t.cat) && (!mode.levels||mode.levels.includes(t.level)));
+    const sh = [...pool].sort(()=>Math.random()-0.5);
+    for (let i=0;i<mode.count&&i<sh.length;i++) seriesQueue.push(sh[i].id);
+    showMainApp();
+    _showCurrentSeriesTask();
+}
+
+function _showCurrentSeriesTask() {
+    if (seriesStep >= seriesQueue.length) { _endSeries(); return; }
+    const task = tasksDatabase.find(t => t.id === seriesQueue[seriesStep]);
+    if (task) showTask(task);
+    _renderSeriesProgress();
+    const btn  = document.getElementById('action-btn');
+    const veto = document.getElementById('veto-btn');
+    const isLast = seriesStep >= seriesQueue.length - 1;
+    btn.innerText = isLast ? 'BEFEJEZÉS' : 'KÖVETKEZŐ →';
+    btn.onclick   = _nextSeriesTask;
+    btn.style.opacity = '1';
+    if (veto) veto.style.display = 'none';
+}
+
+function _nextSeriesTask() { seriesStep++; _showCurrentSeriesTask(); }
+
+function _renderSeriesProgress() {
+    const prog = document.getElementById('series-progress');
+    if (!prog) return;
+    prog.style.display = 'flex';
+    prog.innerHTML = '';
+    for (let i=0;i<seriesQueue.length;i++) {
+        const d = document.createElement('div');
+        d.className = 'series-dot'+(i<seriesStep?' done':'')+(i===seriesStep?' active':'');
+        prog.appendChild(d);
+    }
+}
+
+function _endSeries() {
+    activeSeries = null; seriesStep = 0; seriesQueue = [];
+    document.getElementById('series-progress').style.display = 'none';
+    document.getElementById('task-title').innerText   = 'Vége 🌙';
+    document.getElementById('task-desc').innerText    = 'A sorozat véget ért. Reméljük jól telt az est!';
+    document.getElementById('category-label').innerText = '— BEFEJEZVE —';
+    document.getElementById('feedback-row').style.display = 'none';
+    const btn  = document.getElementById('action-btn');
+    const veto = document.getElementById('veto-btn');
+    btn.innerText = 'ÚJ HANGULAT';
+    btn.onclick = () => { btn.onclick=nextTask; if(veto)veto.style.display='block'; showSeriesScreen(); };
+    if (veto) veto.style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+//  SLIDER
+// ═══════════════════════════════════════════════════════
+function updateSliderLabel() {
+    const v = parseInt(document.getElementById('mood-slider').value);
+    document.getElementById('level-text').innerText = {1:'LÁGY',2:'KÖZEPES',3:'INTENZÍV'}[v];
 }
 
 // ═══════════════════════════════════════════════════════
 //  TIMER
 // ═══════════════════════════════════════════════════════
-function startTimer(seconds, label) {
+function startTimer(seconds) {
     stopTimer();
     timerSeconds = seconds;
-    const total  = seconds;
-    const ring   = document.getElementById('ring-progress');
-    const circumference = 2 * Math.PI * 90; // r=90
-
+    const total = seconds;
+    const ring  = document.getElementById('ring-progress');
+    const circ  = 2 * Math.PI * 90;
+    ring.style.strokeDasharray  = circ;
+    ring.style.strokeDashoffset = 0;
     document.getElementById('timer-overlay').classList.remove('hidden');
     updateTimerDisplay();
-
     timerInterval = setInterval(() => {
         timerSeconds--;
         if (timerSeconds <= 0) {
             timerSeconds = 0;
             updateTimerDisplay();
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
-            stopTimer();
-            return;
+            if (navigator.vibrate) navigator.vibrate([200,100,200,100,400]);
+            stopTimer(); return;
         }
         updateTimerDisplay();
-        const progress = timerSeconds / total;
-        ring.style.strokeDashoffset = circumference * (1 - progress);
+        ring.style.strokeDashoffset = circ * (1 - timerSeconds/total);
     }, 1000);
-
-    // Indítási pozíció
-    ring.style.strokeDasharray  = circumference;
-    ring.style.strokeDashoffset = 0;
 }
-
 function updateTimerDisplay() {
-    const m = Math.floor(timerSeconds / 60);
-    const s = timerSeconds % 60;
-    document.getElementById('timer-display').innerText =
-        `${m}:${s.toString().padStart(2, '0')}`;
+    const m = Math.floor(timerSeconds/60), s = timerSeconds%60;
+    document.getElementById('timer-display').innerText = m+':'+String(s).padStart(2,'0');
 }
-
 function stopTimer() {
-    if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-    }
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
     document.getElementById('timer-overlay').classList.add('hidden');
 }
 
-    </script>
+// ═══════════════════════════════════════════════════════
+//  PÁROS MÓD (JSONBin)
+// ═══════════════════════════════════════════════════════
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
+const JSONBIN_KEY  = '$2a$10$JO3HYFjszG.TWKlikq3h.O5PG6wMMJp5FZtRuCV5u8cLYuT4Bdfgy';
+
+function getBinId(c) { return localStorage.getItem('edge_bin_'+c); }
+function setBinId(c,id) { localStorage.setItem('edge_bin_'+c,id); }
+
+function getPairCode() {
+    const v = document.getElementById('pair-code-input').value.trim();
+    if (v.length !== 4 || isNaN(v)) { alert('Írj be egy 4 jegyű számot!'); return null; }
+    return v;
+}
+function joinAsIranyito() {
+    const code = getPairCode(); if (!code) return;
+    pairCode = code; myRole = 'iranyito';
+    clearSharedTask(); showMainApp(); updateRoleBadge();
+    if (navigator.vibrate) navigator.vibrate([100,50,100]);
+}
+function joinAsBefogado() {
+    const code = getPairCode(); if (!code) return;
+    pairCode = code; myRole = 'befogado';
+    showMainApp(); updateRoleBadge(); startPolling();
+    if (navigator.vibrate) navigator.vibrate([100,50,100]);
+}
+function updateRoleBadge() {
+    const st = document.getElementById('status-text');
+    if (myRole==='iranyito') st.innerHTML='<span style="color:var(--gold);letter-spacing:2px">IRÁNYÍTÓ</span>';
+    else if (myRole==='befogado') st.innerHTML='<span style="color:#aaa;letter-spacing:2px">BEFOGADÓ</span>';
+    else st.textContent='CONNECTED';
+    if (myRole==='befogado') {
+        document.getElementById('action-btn').textContent='VÁROK...';
+        document.getElementById('action-btn').style.opacity='0.5';
+        document.getElementById('veto-btn').style.display='none';
+    }
+}
+async function writeSharedTask(task) {
+    const data = { taskId:task.id, title:task.title, desc:task.desc, cat:task.cat, level:task.level, time:task.time||0, sentAt:Date.now() };
+    const binId = getBinId(pairCode);
+    try {
+        if (binId) {
+            await fetch(JSONBIN_BASE+'/b/'+binId, { method:'PUT', headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY}, body:JSON.stringify(data) });
+        } else {
+            const res = await fetch(JSONBIN_BASE+'/b', { method:'POST', headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY,'X-Bin-Name':'edge_'+pairCode,'X-Bin-Private':'false'}, body:JSON.stringify(data) });
+            const json = await res.json();
+            if (json.metadata?.id) setBinId(pairCode, json.metadata.id);
+        }
+    } catch(e) { localStorage.setItem('edge_task_'+pairCode, JSON.stringify(data)); }
+}
+async function readSharedTask() {
+    const binId = getBinId(pairCode);
+    try {
+        if (binId) {
+            const res  = await fetch(JSONBIN_BASE+'/b/'+binId+'/latest', { headers:{'X-Master-Key':JSONBIN_KEY} });
+            const json = await res.json();
+            return json.record || null;
+        }
+    } catch(e) {}
+    const local = localStorage.getItem('edge_task_'+pairCode);
+    return local ? JSON.parse(local) : null;
+}
+async function clearSharedTask() {
+    if (!pairCode) return;
+    localStorage.removeItem('edge_task_'+pairCode);
+}
+function startPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(checkForNewTask, 3000);
+}
+async function checkForNewTask() {
+    if (myRole !== 'befogado' || !pairCode) return;
+    const data = await readSharedTask();
+    if (!data || data.taskId === lastTaskId) return;
+    if (Date.now() - data.sentAt > 300000) return;
+    lastTaskId = data.taskId;
+    showIncomingTask(data);
+}
+function showIncomingTask(data) {
+    document.getElementById('task-title').innerText = data.title;
+    document.getElementById('task-desc').innerText  = data.desc;
+    const tb = document.getElementById('time-badge');
+    if (data.time > 0) { tb.innerText=Math.floor(data.time/60)+' perc'; tb.classList.remove('hidden'); }
+    else tb.classList.add('hidden');
+    showMainApp();
+    if (navigator.vibrate) navigator.vibrate([200,100,200]);
+}
+</script>
+
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').then(reg => {
-        // Minden oldalbetöltéskor ellenőrzi van-e új verzió
         reg.update();
-        // Ha új SW vár, azonnal aktiválja
         reg.addEventListener('updatefound', () => {
-          const newSW = reg.installing;
-          newSW.addEventListener('statechange', () => {
-            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-              // Új verzió elérhető - oldal újratöltése
-              window.location.reload();
-            }
+          const nw = reg.installing;
+          nw.addEventListener('statechange', () => {
+            if (nw.state==='installed' && navigator.serviceWorker.controller) window.location.reload();
           });
         });
       });
-      // Ha a SW átvette az irányítást, töltse újra az oldalt
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        window.location.reload();
-      });
+      navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
     }
   </script>
 </body>

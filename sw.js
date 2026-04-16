@@ -1,4 +1,4 @@
-const CACHE = 'planner-v9';
+const CACHE = 'planner-v13';
 
 // Telepítéskor csak az ikonokat és manifest-et mentjük
 self.addEventListener('install', e => {
