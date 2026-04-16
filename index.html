@@ -1204,14 +1204,12 @@ function showIncomingTask(data) {
 </script>
 
   <script>
+    // Töröljük az összes régi service workert - nincs új regisztráció
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(regs => {
-        // Töröljük az összes régi SW-t
         regs.forEach(r => r.unregister());
-      }).then(() => {
-        // Csak manifest miatt regisztráljuk - cache NÉLKÜL
-        navigator.serviceWorker.register('./sw.js');
       });
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
     }
   </script>
 </body>
