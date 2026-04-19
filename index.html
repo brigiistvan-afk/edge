@@ -152,6 +152,71 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 .intro-anim   { animation:fadeInUp 0.5s ease forwards; }
 .intro-anim-2 { animation:fadeInUp 0.5s 0.12s ease both; }
 .intro-anim-3 { animation:fadeInUp 0.5s 0.24s ease both; }
+
+/* ── KEDVENCEK ── */
+#favorites-screen {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--black);
+    overflow-y: auto;
+}
+.fav-header {
+    padding: 22px 25px 14px;
+    border-bottom: 1px solid #141414;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.fav-title { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1.8rem; font-weight:300; letter-spacing:3px; }
+.fav-list { padding: 16px 25px 30px; display:flex; flex-direction:column; gap:10px; }
+.fav-item {
+    background: #0d0d0d;
+    border: 1px solid #1e1e1e;
+    border-radius: 12px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.fav-item:active { border-color: var(--gold); }
+.fav-item-info { flex: 1; }
+.fav-item-cat  { font-size:0.6rem; letter-spacing:3px; color:#555; text-transform:uppercase; margin-bottom:4px; }
+.fav-item-title { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1.1rem; }
+.fav-item-del  { color:#333; font-size:1.2rem; padding:4px 8px; background:none; border:none; cursor:pointer; }
+.fav-item-del:active { color:#c04040; }
+.fav-empty { text-align:center; color:#444; font-size:0.8rem; letter-spacing:2px; padding:40px 0; text-transform:uppercase; }
+
+/* ── ONBOARDING ── */
+#onboard-screen {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 30px 25px;
+    gap: 0;
+    background: var(--black);
+    overflow-y: auto;
+}
+.onboard-step {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+    animation: fadeInUp 0.4s ease forwards;
+}
+.onboard-step.active { display: flex; }
+.onboard-emoji { font-size: 3rem; text-align: center; }
+.onboard-title { font-family:'Cormorant Garamond',serif; color:var(--gold); font-size:1.8rem; font-weight:300; letter-spacing:3px; text-align:center; line-height:1.3; }
+.onboard-text  { font-size:0.88rem; line-height:1.8; color:#aaa; text-align:center; }
+.onboard-next  { background:linear-gradient(135deg,#c9a227,#d4af37); border:none; color:#000; padding:17px; border-radius:12px; width:100%; font-family:'Jost',sans-serif; font-size:0.85rem; letter-spacing:4px; text-transform:uppercase; cursor:pointer; margin-top:10px; }
+.onboard-skip  { background:none; border:none; color:#444; font-size:0.7rem; letter-spacing:2px; font-family:'Jost',sans-serif; cursor:pointer; text-align:center; padding:8px; text-transform:uppercase; }
+.onboard-dots  { display:flex; gap:6px; justify-content:center; }
+.onboard-dot   { width:6px; height:6px; border-radius:50%; background:#333; transition:background 0.3s; }
+.onboard-dot.active { background:var(--gold); }
+
     </style>
 </head>
 <body>
@@ -166,6 +231,54 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
         <button class="special" onclick="unlock()">*</button>
         <button onclick="calc(0)">0</button>
         <button class="special" onclick="resetCalc()">C</button>
+    </div>
+</div>
+
+
+<!-- ░░ KEDVENCEK ░░ -->
+<div id="favorites-screen" class="hidden">
+    <div class="fav-header">
+        <span class="fav-title">🔥 Kedvencek</span>
+        <button class="mode-btn dim" style="padding:8px 14px;font-size:0.6rem;width:auto;border-radius:20px" onclick="showMainApp()">← Vissza</button>
+    </div>
+    <div class="fav-list" id="fav-list">
+        <div class="fav-empty">Még nincsenek kedvencek.<br>Nyomj 🔥-t egy feladatnál.</div>
+    </div>
+</div>
+
+<!-- ░░ ONBOARDING ░░ -->
+<div id="onboard-screen" class="hidden">
+    <div class="onboard-dots">
+        <div class="onboard-dot active" id="dot-0"></div>
+        <div class="onboard-dot" id="dot-1"></div>
+        <div class="onboard-dot" id="dot-2"></div>
+        <div class="onboard-dot" id="dot-3"></div>
+    </div>
+    <br>
+    <div class="onboard-step active" id="step-0">
+        <div class="onboard-emoji">🎴</div>
+        <div class="onboard-title">Üdv az Edge appban</div>
+        <div class="onboard-text">Egy páros játék, ami a közelséget és az izgalmat tartja életben — együtt és távolból egyaránt.</div>
+        <button class="onboard-next" onclick="nextOnboard()">TOVÁBB</button>
+        <button class="onboard-skip" onclick="skipOnboard()">Kihagyom</button>
+    </div>
+    <div class="onboard-step" id="step-1">
+        <div class="onboard-emoji">😈 🌹</div>
+        <div class="onboard-title">Irányító és Befogadó</div>
+        <div class="onboard-text">Az egyik fél az <b style="color:var(--gold)">Irányító</b> — ő adja a feladatokat és vezeti a játékot.<br><br>A másik fél a <b style="color:#aaa">Befogadó</b> — ő teljesíti és megadja magát az élménynek.<br><br>A szerepek bármikor cserélhetők.</div>
+        <button class="onboard-next" onclick="nextOnboard()">TOVÁBB</button>
+    </div>
+    <div class="onboard-step" id="step-2">
+        <div class="onboard-emoji">✨ ⚡ 🌊</div>
+        <div class="onboard-title">Válassz hangulatot</div>
+        <div class="onboard-text">Minden este más hangulatban vagytok. Az app ennek megfelelően szűri a feladatokat.<br><br><b style="color:var(--gold)">Lassú</b> — érzéki, romantikus<br><b style="color:var(--gold)">Intim</b> — mély, közel<br><b style="color:var(--gold)">Vad</b> — intenzív, nyers<br><b style="color:var(--gold)">Mély</b> — érzelmi<br><b style="color:var(--gold)">Játékos</b> — könnyed, humoros</div>
+        <button class="onboard-next" onclick="nextOnboard()">TOVÁBB</button>
+    </div>
+    <div class="onboard-step" id="step-3">
+        <div class="onboard-emoji">■</div>
+        <div class="onboard-title">A STOP gomb</div>
+        <div class="onboard-text">Bármikor megnyomható. Azonnal visszavisz a számológéphez — senki sem látja mi volt nyitva.<br><br>A játéknak mindig van egy <b style="color:var(--gold)">safe word</b> — ha valamelyikőtöknek elég, mondja ki és megállnak.</div>
+        <button class="onboard-next" onclick="finishOnboard()">KEZDJÜK</button>
     </div>
 </div>
 
@@ -233,7 +346,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
     <header>
         <div id="status"><div class="status-dot"></div><span id="status-text">CONNECTED</span></div>
         <div style="display:flex;gap:6px;align-items:center">
-            <button class="mode-btn dim" style="padding:6px 12px;font-size:0.55rem;width:auto;border-radius:20px" onclick="showSeriesScreen()">HANGULAT</button>
+            <button class="mode-btn dim" style="padding:6px 12px;font-size:0.55rem;width:auto;border-radius:20px" onclick="showFavorites()">🔥</button><button class="mode-btn dim" style="padding:6px 12px;font-size:0.55rem;width:auto;border-radius:20px" onclick="showSeriesScreen()">HANGULAT</button>
             <button class="mode-btn dim" style="padding:6px 12px;font-size:0.55rem;width:auto;border-radius:20px" onclick="showPairScreen()">PÁROS</button>
             <button class="safe-word" onclick="safeWord()" oncontextmenu="forceRefresh();return false;" title="Tartsd 3mp-ig a cache törléséhez">■ STOP</button>
         </div>
@@ -277,7 +390,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 <div id="pair-screen" class="hidden">
     <div class="pair-title">Kapcsolódás</div>
     <div class="pair-sub">Add meg a közös kódot</div>
-    <input class="pair-input" id="pair-code-input" type="number" maxlength="4" placeholder="0000" oninput="this.value=this.value.slice(0,4)">
+    <input class="pair-input" id="pair-code-input" type="tel" maxlength="4" placeholder="0000" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
     <button class="mode-btn gold" onclick="joinAsIranyito()">Irányítóként csatlakozom</button>
     <button class="mode-btn outline" onclick="joinAsBefogado()">Befogadóként csatlakozom</button>
     <button class="mode-btn dim" onclick="showMainApp()">Egyedül folytatom</button>
@@ -334,7 +447,10 @@ function activateLicense() {
             hideAllScreens();
             document.getElementById('mood-screen').classList.remove('hidden');
             loadFeedback();
+            loadFavorites();
+            loadLastSession();
             if (navigator.vibrate) navigator.vibrate([100,50,200]);
+            checkOnboard();
             return;
         }
     }
@@ -402,9 +518,9 @@ const tasksDatabase = [
   { id: 36,  cat: "Sensory",      title: "A Konyha Íze",                desc: `Vigyetek be egy édes és egy sós ízt a játékba (pl. méz, tejszínhab, só). Az Irányító helyezze el ezeket a Befogadó testén, majd csukott szemmel keresse meg őket.`,  level: 2 },
   { id: 37,  cat: "Romantikus",   title: "Tükörkép",                    desc: `Álljatok a tükör elé egymás mögé. Az Irányító csak a tükrön keresztül nézheti a párját, miközben lassan simogatja a derekát.`,  level: 1 },
   { id: 38,  cat: "Hardcore",     title: "60 Másodperces Roham",        desc: `Az Irányító 60 másodpercig bármit kérhet, amit a Befogadónak azonnal, gondolkodás nélkül teljesítenie kell.`,  level: 3, time: 60 },
-  { id: 39,  cat: "Psychology",   title: "A Várakozás Művészete",       desc: `Az app egy véletlenszerű időzítőt indít (2–5 perc). Addig tilos bármilyen fizikai kontaktus, csak a tekintetetek találkozhat.`,  level: 1 },
+  { id: 39,  cat: "Psychology",   title: "A Várakozás Művészete",       desc: `Válasszatok egy 2-5 perces időt. Addig tilos bármilyen fizikai kontaktus — csak a tekintetetek találkozhat. A feszültség épül.`,  level: 1 },
   { id: 40,  cat: "Roleplay",     title: "A Szobalány/Inas",            desc: `Az egyik fél 15 percig minden apró kérést teljesít (pl. italhozatal, lábmasszázs), de csak a legudvariasabb formában.`,  level: 2, time: 900 },
-  { id: 41,  cat: "Sensory",      title: "Vibráló Csend",               desc: `Ha van otthon segédeszköz, az Irányító helyezze el a Befogadón, de a fokozatot csak ő irányíthatja az app ritmusára.`,  level: 3 },
+  { id: 41,  cat: "Sensory",      title: "Vibráló Csend",               desc: `Ha van otthon segédeszköz, az Irányító helyezze el a Befogadón, de a fokozatot kizárólag az Irányító irányíthatja — a Befogadónak tilos belenyúlni.`,  level: 3 },
   { id: 42,  cat: "Romantikus",   title: "Lassított Felvétel",          desc: `Minden mozdulatot ötször lassabban kell végeznetek a következő 10 percben. A lassúság elmélyíti az érzékelést.`,  level: 1, time: 600 },
   { id: 43,  cat: "Public Edge",  title: "A Távoli Kontroll",           desc: `Egy nyilvános üzenetküldőn keresztül küldj egy képet a párodnak arról, mi vár rá, ha hazaértek.`,  level: 2 },
   { id: 44,  cat: "BDSM-lite",    title: "Szemfedő",                    desc: `Egy sötét sállal takarjátok le a Befogadó szemét. Az Irányító mozgassa a Befogadó kezét saját magán, irányítva az érintéseket.`,  level: 2 },
@@ -516,7 +632,7 @@ const tasksDatabase = [
   { id: 150, cat: "Távoli",       title: "A Jövő Idő",                  desc: `Írd meg, mi lesz az első dolog, amit teszel, ha belépsz az ajtón.`,  level: 2 },
   { id: 151, cat: "Direkt",       title: "Csak a Körmökkel",            desc: `(Finoman!) Húzd végig a körmeidet a párod hátán és karjain.`,  level: 2 },
   { id: 152, cat: "Érzéki",       title: "Fül-csók",                    desc: `Koncentrálj kizárólag a fül és a nyak területére 10 percig.`,  level: 1, time: 600 },
-  { id: 153, cat: "Direkt",       title: "Orális Ritmus-váltás",        desc: `Az app jelzésére (rezgés) váltsatok tempót az orális kényeztetésnél.`,  level: 3 },
+  { id: 153, cat: "Direkt",       title: "Orális Ritmus-váltás",        desc: `Az Irányító kopogással vagy szóval jelzi mikor kell tempót váltani az orális kényeztetésnél. Legalább 3-szor váltsatok.`,  level: 3 },
   { id: 154, cat: "Távoli",       title: "Titkos Üzenet",               desc: `Küldj egy üzenetet, amit a párodnak csak a mosdóban szabad elolvasnia.`,  level: 2 },
   { id: 155, cat: "Direkt",       title: "Végső Szimfónia",             desc: `Minden tanult technikát vessetek be az utolsó 10 percben.`,  level: 3, time: 600 },
   { id: 156, cat: "Direkt",       title: "Közös Ritmus",                desc: `Az egyikőtök ujjaival, a másik pedig a lélegzetével diktálja a tempót, amíg teljesen egy ütemre nem mozogtok.`,  level: 2 },
@@ -621,7 +737,7 @@ const tasksDatabase = [
   { id: 299, cat: "Vad",         mood: "vad",    title: "Gyors és Intenzív",      desc: `Nincs előjáték. Nincs lassítás. 5 perc maximális intenzitás. Aztán csend.`, level: 3, time: 300 },
   { id: 300, cat: "Vad",         mood: "vad",    title: "A Hang",                 desc: `Ma nem kell csendben maradni. Ellenkezőleg — minél hangosabb annál jobb. Senki ne fojtsa el magát.`, level: 3 },
   { id: 301, cat: "Vad",         mood: "vad",    title: "A Meglepetés Támadás",   desc: `Az egyik fél bármikor és bárhol a lakásban meglepetésszerűen kezdeményez. A másik nem utasíthatja vissza.`, level: 3 },
-  { id: 302, cat: "Vad",         mood: "vad",    title: "Nem az Ágyon",           desc: `Az app kisorsolja a helyszínt. Szoba: ${['konyha','fürdőszoba','nappali','folyosó','erkély'][Math.floor(Math.random()*5)]}. Ott kell maradni.`, level: 3 },
+  { id: 302, cat: "Vad",         mood: "vad",    title: "Nem az Ágyon",           desc: `Válasszatok egy szokatlan helyszínt a lakásban: konyha, fürdőszoba, nappali, folyosó vagy erkély. Ott kell maradni.`, level: 3 },
   { id: 303, cat: "Vad",         mood: "vad",    title: "Az Erő Játéka",          desc: `Az Irányító fizikailag domináns — tartja, fogja, irányítja. A Befogadó ellenáll amíg bírja majd megadja magát.`, level: 3 },
   { id: 304, cat: "Vad",         mood: "vad",    title: "Csak a Test",            desc: `Nincs szó. Nincs hang. Csak a testetek kommunikál egymással. 10 percig néma intenzitás.`, level: 3, time: 600 },
   { id: 305, cat: "Vad",         mood: "vad",    title: "A Visszaszámlálás",      desc: `Az Irányító hangosan számol 60-tól 1-ig. Ennyi az előjáték. A 0-nál kezdődik az igazi.`, level: 3, time: 60 },
@@ -749,6 +865,123 @@ const tavoliModes = {
     vegyes:     { cats: ['Fantázia','Napközbeni','Távoli','Mély'],  count: 6 }
 };
 
+
+// ═══════════════════════════════════════════════════════
+//  KEDVENCEK
+// ═══════════════════════════════════════════════════════
+let favorites = [];
+
+function loadFavorites() {
+    try {
+        const s = localStorage.getItem('edge_favorites');
+        if (s) favorites = JSON.parse(s);
+    } catch(e) { favorites = []; }
+}
+
+function saveFavorites() {
+    localStorage.setItem('edge_favorites', JSON.stringify(favorites));
+}
+
+function addToFavorites(task) {
+    if (!favorites.find(f => f.id === task.id)) {
+        favorites.push({ id: task.id, title: task.title, cat: task.cat });
+        saveFavorites();
+    }
+}
+
+function removeFromFavorites(taskId) {
+    favorites = favorites.filter(f => f.id !== taskId);
+    saveFavorites();
+    renderFavorites();
+}
+
+function showFavorites() {
+    hideAllScreens();
+    document.getElementById('favorites-screen').classList.remove('hidden');
+    renderFavorites();
+}
+
+function renderFavorites() {
+    const list = document.getElementById('fav-list');
+    if (!list) return;
+    if (favorites.length === 0) {
+        list.innerHTML = '<div class="fav-empty">Még nincsenek kedvencek.<br>Nyomj 🔥-t egy feladatnál.</div>';
+        return;
+    }
+    list.innerHTML = favorites.map(f => `
+        <div class="fav-item" onclick="playFavorite(${f.id})">
+            <div class="fav-item-info">
+                <div class="fav-item-cat">${f.cat}</div>
+                <div class="fav-item-title">${f.title}</div>
+            </div>
+            <button class="fav-item-del" onclick="event.stopPropagation();removeFromFavorites(${f.id})">✕</button>
+        </div>
+    `).join('');
+}
+
+function playFavorite(taskId) {
+    const task = tasksDatabase.find(t => t.id === taskId);
+    if (!task) return;
+    showMainApp();
+    showTask(task);
+}
+
+// ═══════════════════════════════════════════════════════
+//  UTOLSÓ FELADATOK EMLÉKEZÉS
+// ═══════════════════════════════════════════════════════
+let lastSessionIds = [];
+
+function loadLastSession() {
+    try {
+        const s = localStorage.getItem('edge_last_session');
+        if (s) lastSessionIds = JSON.parse(s);
+    } catch(e) { lastSessionIds = []; }
+}
+
+function saveLastSession() {
+    // Csak az utolsó 10 feladatot menti
+    localStorage.setItem('edge_last_session', JSON.stringify(seenIds.slice(-10)));
+}
+
+// ═══════════════════════════════════════════════════════
+//  ONBOARDING
+// ═══════════════════════════════════════════════════════
+let onboardStep = 0;
+
+function checkOnboard() {
+    const seen = localStorage.getItem('edge_onboard_done');
+    if (!seen) {
+        // Első indítás - onboarding
+        hideAllScreens();
+        document.getElementById('onboard-screen').classList.remove('hidden');
+    } else {
+        // Már látta - hangulat képernyő
+        hideAllScreens();
+        document.getElementById('mood-screen').classList.remove('hidden');
+    }
+}
+
+function nextOnboard() {
+    onboardStep++;
+    document.querySelectorAll('.onboard-step').forEach((s,i) => {
+        s.classList.toggle('active', i === onboardStep);
+    });
+    document.querySelectorAll('.onboard-dot').forEach((d,i) => {
+        d.classList.toggle('active', i === onboardStep);
+    });
+}
+
+function skipOnboard() {
+    finishOnboard();
+}
+
+function finishOnboard() {
+    localStorage.setItem('edge_onboard_done', '1');
+    hideAllScreens();
+    document.getElementById('mood-screen').classList.remove('hidden');
+    loadFeedback();
+}
+
 // ═══════════════════════════════════════════════════════
 //  SZÁMOLÓGÉP
 // ═══════════════════════════════════════════════════════
@@ -766,8 +999,10 @@ function unlock() {
         document.getElementById('ghost-app').classList.add('hidden');
         if (navigator.vibrate) navigator.vibrate([100,50,200]);
         if (checkStoredLicense()) {
-            document.getElementById('mood-screen').classList.remove('hidden');
             loadFeedback();
+            loadFavorites();
+            loadLastSession();
+            checkOnboard();
         } else {
             document.getElementById('license-screen').classList.remove('hidden');
         }
@@ -781,7 +1016,8 @@ function unlock() {
 // ═══════════════════════════════════════════════════════
 function hideAllScreens() {
     ['ghost-app','license-screen','mood-screen','tavoli-screen',
-     'series-screen','main-app','pair-screen','timer-overlay'].forEach(id => {
+     'series-screen','main-app','pair-screen','timer-overlay',
+     'favorites-screen','onboard-screen'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
     });
@@ -895,6 +1131,10 @@ function getPool() {
 }
 
 function pickTask(pool) {
+    // Előző session feladatait kizárjuk ha lehet
+    const notLastSession = pool.filter(t => !lastSessionIds.includes(t.id) && !seenIds.includes(t.id));
+    if (notLastSession.length > 0) return notLastSession[Math.floor(Math.random() * notLastSession.length)];
+    // Fallback: csak a jelenlegi session-ben nem látottak
     const unseen = pool.filter(t => !seenIds.includes(t.id));
     const final  = unseen.length > 0 ? unseen : pool;
     return final[Math.floor(Math.random() * final.length)];
@@ -910,7 +1150,16 @@ function nextTask() {
     const task = pickTask(getPool());
     if (!task) return;
     seenIds.push(task.id);
+    saveLastSession();
     showTask(task);
+    // Ha Irányító módban van, automatikusan elküldi a Befogadónak
+    if (myRole === 'iranyito' && pairCode) {
+        writeSharedTask(task);
+        const b = document.getElementById('action-btn');
+        const orig = b.innerText;
+        setTimeout(() => { b.innerText = '✓ ELKÜLDVE'; }, 300);
+        setTimeout(() => { b.innerText = 'KÖVETKEZŐ'; }, 1800);
+    }
     if (selectedMood) {
         moodStep++;
         updateMoodProgress();
@@ -985,6 +1234,9 @@ function giveFeedback(type) {
     document.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('selected'));
     event.target.classList.add('selected');
     localStorage.setItem('edge_feedback', JSON.stringify(feedbackData));
+    // 🔥 = kedvencekhez adás
+    if (type === 'fire') addToFavorites(task);
+    // ❌ = következő feladat
     if (type === 'skip') setTimeout(() => nextTask(), 600);
 }
 
@@ -1124,20 +1376,39 @@ function getBinId(c) { return localStorage.getItem('edge_bin_'+c); }
 function setBinId(c,id) { localStorage.setItem('edge_bin_'+c,id); }
 
 function getPairCode() {
-    const v = document.getElementById('pair-code-input').value.trim();
-    if (v.length !== 4 || isNaN(v)) { alert('Írj be egy 4 jegyű számot!'); return null; }
-    return v;
+    const raw = document.getElementById('pair-code-input').value;
+    const v   = raw.replace(/[^0-9]/g, '').trim();
+    if (v.length < 1) {
+        alert('Írj be egy 1-4 jegyű kódot!');
+        return null;
+    }
+    // Kiegészítjük 4 jegyre ha rövidebb
+    return v.padStart(4, '0');
 }
 function joinAsIranyito() {
     const code = getPairCode(); if (!code) return;
     pairCode = code; myRole = 'iranyito';
-    clearSharedTask(); showMainApp(); updateRoleBadge();
+    clearSharedTask();
+    showMainApp();
+    updateRoleBadge();
+    // Visszajelzés - feladat gomb aktiválása
+    const btn = document.getElementById('action-btn');
+    btn.innerText = 'KÜLDJ FELADATOT';
+    btn.onclick   = nextTask;
+    btn.style.opacity = '1';
+    document.getElementById('veto-btn').style.display = 'none';
     if (navigator.vibrate) navigator.vibrate([100,50,100]);
 }
 function joinAsBefogado() {
     const code = getPairCode(); if (!code) return;
     pairCode = code; myRole = 'befogado';
-    showMainApp(); updateRoleBadge(); startPolling();
+    showMainApp();
+    updateRoleBadge();
+    startPolling();
+    // Visszajelzés
+    document.getElementById('task-title').innerText = 'Várakozás...';
+    document.getElementById('task-desc').innerText  = 'Az Irányító hamarosan küld egy feladatot. Kód: ' + code;
+    document.getElementById('category-label').innerText = '— BEFOGADÓ —';
     if (navigator.vibrate) navigator.vibrate([100,50,100]);
 }
 function updateRoleBadge() {
